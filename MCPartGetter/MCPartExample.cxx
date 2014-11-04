@@ -58,13 +58,8 @@ namespace larlite {
 			  ::larutil::Geometry::GetME()->DetHalfHeight(),
 			  0,
 			  ::larutil::Geometry::GetME()->DetLength());
-
-    setPOT(6.0e20);
-    setpps(1.2e12);
-    setBeamTime(1.6e-6);
-    setEventTime(3.2e-3);
-
   }
+
   
   bool MCPartExample::analyze(storage_manager* storage) {
 
@@ -74,17 +69,28 @@ namespace larlite {
       std::cout << "Noooo! " << std::endl;
       return false;
     }
-    
-    //    clock_t t;
 
-    // make the particle map
+    // make the particle map & Tree-structure
     _MCgetter.Reset(event_part);
-
+    
+    // If the _MCgetter.getAllPDGs() function was called somewhere
+    // before the Reset function, then while looping through particles
+    // _MCgetter will also find ones that have the right PDG and are
+    // above the enrergy cut.
+    // The particles that succesfully make the cut are placed in a
+    // vector (_TreeNodes in _MCgetter) which holds vectors of TrackId
+    // values. Each element in _TreeNodes is a list of different PDG
+    // particles, the order defined one the list of PDGs that we are
+    // searching for is set. See mac/mcparexample.py to see where
+    // this list is set.
+    // This list of trackId values can be retrieved with the
+    // _MCgetter.getTreeNodelist() function as shown below
     std::vector<TreeNode> result = _MCgetter.getTreeNodelist().at(0);
     std::vector<TreeNode> muon = _MCgetter.getTreeNodelist().at(1);
     
     std::cout << "MCParticles:   " << event_part->size() << std::endl;
     std::cout << "Matches found: " << result.size() << std::endl;
+    std::cout << "Muons found:   " << muon.size() << std::endl;
 
     //prepare list of muon tracks (each track a list of 3D points)
     std::vector< std::vector< std::vector<double> > > muonTracks;

@@ -47,16 +47,22 @@ my_proc.set_ana_output_file("ana.root")
 # To show how one can run multiple analysis modules at once,
 # we make multiple ana_base instance.
 
-background=fmwk.MCPartExample()
-background.SetVerbose(False)
-# Energy cut: If PDG match && E > _ECut then add particle
-background.SetECut(0.1)
+example = fmwk.MCPartExample()
+example.SetVerbose(False)
+
 # Vector of PDGs to search
 pdgs    = ROOT.vector('int')()
 pdgs.push_back(11)
 pdgs.push_back(13)
+
+mcgetter = fmwk.MCgetter()
+mcgetter.getAllPDGs(pdgs)
+# Energy cut: If PDG match && E > _ECut [GeV] then add particle
+mcgetter.SetECut(0.1)
+
 # Tell module what PDGs to search for
-background.SetPDGlist(pdgs)
+example.SetMCgetter(mcgetter)
+
 
 #set Process to search for here
 #strings = ROOT.vector('string')()
@@ -67,16 +73,16 @@ background.SetPDGlist(pdgs)
 
 # Add analysis modules to the processor
 
-my_proc.add_process(background)
+my_proc.add_process(example)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 15
+numEvts = 10
 my_proc.run(0,numEvts)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds
 print "time diff is {0} sec.".format(dt)
-print "time per event is: {0} milli-sec.".format(1000*dt/numEvts)
+print "time per event is: {0} seconds".format(dt/numEvts)
 '''
 while my_proc.process_event():
     usrinput = raw_input("Hit Enter: next evt  ||  q: exit viewer\n")

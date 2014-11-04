@@ -57,37 +57,17 @@ namespace larlite {
     /// Function to set physics process to be analyzed
     void SetProcess(std::vector<int> PDGs, std::vector<std::string> procs);
 
-    /// Set Energy threshold for particles to be considered
-    void SetECut(double E) { _MCgetter.SetECut(E); _Ecut = E; }
-
-    /// Set-up Background Histogram Information
-    void SetBackgroundHistogram(int nbins, float xmin, float xmax);
-    /// NormalizeBackground
-    void NormalizeBackgroundHistogram();
-    /// Write Background Histogram
-    void WriteBackgroundHistogram();
-    /// Fill Background Histogram
-    void FillBackgroundHistogram();
-
-
-    /// Set PDG lsit for MCgetter
-    void SetPDGlist(std::vector<int> pdgs) { _MCgetter.getAllPDGs(pdgs); }
+    /// Set MCgetter object
+    void SetMCgetter(MCgetter mcgetter) { _MCgetter = mcgetter; }
 
     /// Set Distance for Cut for muons
     void SetCutDist(double d) { _cutDist = d; }
 
     /// prepare TTree
     void prepareTree();
+
     /// Set All Properties
     void SetProperties();
-    /// Set POTs:
-    void setPOT(double pot) { _POT = pot; }
-    /// Set pps"
-    void setpps(double pps) { _pps = pps; }
-    /// Set beam Time
-    void setBeamTime(double beamtime) { _beamT = beamtime; }
-    /// Set event readout time
-    void setEventTime(double eventtime) { _eventT = eventtime; }
 
     protected:
 
@@ -115,19 +95,6 @@ namespace larlite {
     //Cut Distance
     double _cutDist;
 
-    /// Variables useful to normalize events
-    /// POT requested: duration of experiment
-    double _POT; 
-    /// pulses-per-spill (one spill = one event)
-    double _pps;
-    /// event readout time
-    double _eventT;
-    /// beam time
-    double _beamT;
-    /// Number of events in file
-    double _Nevents;
-
-
     /// Tree for analysis
     TTree* _tree;
     //variables for analysis
@@ -153,13 +120,6 @@ namespace larlite {
     std::vector<std::vector<double> > AncestorTraj;
     std::string Process;
     std::string ProcHist;
-
-    // Variable for Background Histogram
-    TH1D*  _hBackground;
-    int    _Nbins;
-    double _Emin;
-    double _Emax;
-    
 
   };
 }

@@ -43,3 +43,8 @@ Thumbs.db
 # Emacs Edits #
 ###############
 *~
+
+# Cint stuff #
+##############
+*Cint.h
+*Cint.cxx

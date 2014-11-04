@@ -1,0 +1,5 @@
+Library.TreeNode:                           libMCPartInfo_MCPartGetter.so libLArLite_Analysis.so
+Library.TreeTop:                            libMCPartInfo_MCPartGetter.so libLArLite_Analysis.so
+Library.larlite@@MCPartExample:             libMCPartInfo_MCPartGetter.so libLArLite_Analysis.so
+Library.larlite@@MCgetter:                  libMCPartInfo_MCPartGetter.so libLArLite_Analysis.so
+Library.larlite@@sample_ana:                libMCPartInfo_MCPartGetter.so libLArLite_Analysis.so

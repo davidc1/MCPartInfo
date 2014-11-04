@@ -49,16 +49,21 @@ my_proc.set_ana_output_file("ana.root")
 
 background=fmwk.MCPartExample()
 background.SetVerbose(False)
+# Energy cut: If PDG match && E > _ECut then add particle
 background.SetECut(0.1)
-#set Process to search for here
-strings = ROOT.vector('string')()
-strings.push_back("primary")
-strings.push_back("compt")
+# Vector of PDGs to search
 pdgs    = ROOT.vector('int')()
 pdgs.push_back(11)
 pdgs.push_back(13)
-background.SetProcess(pdgs,strings);
+# Tell module what PDGs to search for
 background.SetPDGlist(pdgs)
+
+#set Process to search for here
+#strings = ROOT.vector('string')()
+#strings.push_back("primary")
+#strings.push_back("compt")
+#background.SetProcess(pdgs,strings);
+
 
 # Add analysis modules to the processor
 

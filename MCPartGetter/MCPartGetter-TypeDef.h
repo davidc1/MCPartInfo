@@ -6,7 +6,6 @@
 #define LARLITE_MCPARTGETTER_TYPEDEF_H
 
 // Header files included here
-#include "sample_ana.h"
 #include "MCgetter.h"
 #include "MCPartExample.h"
 #include "TreeNode.h"
@@ -16,7 +15,6 @@
 // Class forward declaration here
 namespace larlite {
 
-  class sample_ana;
   class MCgetter;
   class MCPartExample;
 

@@ -111,6 +111,7 @@ namespace larlite {
 	std::vector<std::vector<double> > partTrajAll = _MCgetter.getTrajectoryPoints(&part);
 	std::vector<std::vector<double> > partTrajInTPC = _MCgetter.getTrajectoryPointsInTPC(&part,0); //0 cm buffer...up to TPC boundaries
 	std::vector<std::vector<double> > partTrajInTPCExtra = _MCgetter.getTrajectoryPointsInTPC(&part,100);//100 cm buffer...track up to 1 meter away from all directions
+	std::string process = _MCgetter.getFullProcess(part);
 	
 	if ( !(result.at(j).isPrimary()) ){
 	  if (_MCgetter.searchParticleMap(result.at(j).getParentId()) >= 0)

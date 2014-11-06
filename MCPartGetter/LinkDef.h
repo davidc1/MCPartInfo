@@ -13,6 +13,7 @@
 #pragma link C++ class larlite::MCgetter+;
 #pragma link C++ class TreeNode+;
 #pragma link C++ class TreeTop+;
+#pragma link C++ class larlite::ComptonBackground+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif

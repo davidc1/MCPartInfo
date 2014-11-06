@@ -1,5 +1,5 @@
-#ifndef CALCULATEBACKGROUND_CXX
-#define CALCULATEBACKGROUND_CXX
+#ifndef MCPARTEXAMPLE_CXX
+#define MCPARTEXAMPLE_CXX
 
 #include "MCPartExample.h"
 #include <time.h>

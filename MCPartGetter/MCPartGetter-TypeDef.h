@@ -10,6 +10,7 @@
 #include "MCPartExample.h"
 #include "TreeNode.h"
 #include "TreeTop.h"
+#include "ComptonBackground.h"
 //ADD_NEW_HEADER ... do not change this comment line
 
 // Class forward declaration here
@@ -17,6 +18,7 @@ namespace larlite {
 
   class MCgetter;
   class MCPartExample;
+  class ComptonBackground;
 
 //ADD_ANA_CLASS ... do not change this comment line
 

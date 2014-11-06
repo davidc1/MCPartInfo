@@ -1,9 +1,9 @@
 /**
- * \file MCPartExample.h
+ * \file ComptonBackground.h
  *
  * \ingroup MCInfo
  * 
- * \brief Class def header for a class MCPartExample
+ * \brief Class def header for a class ComptonBackground
  *
  * @author David Caratelli
  */
@@ -12,42 +12,43 @@
 
     @{*/
 
-#ifndef MCPARTEXAMPLE_H
-#define MCPARTEXAMPLE_H
+#ifndef COMPTONBACKGROUND_H
+#define COMPTONBACKGROUND_H
 
 #include "Analysis/ana_base.h"
 #include "MCgetter.h"
 #include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
 #include "BasicTool/GeoAlgo/PointToLineDist.h"
+#include "BasicTool/GeoAlgo/TwoLineIntersection.h"
 #include "LArUtil/Geometry.h"
 #include <string>
 
 namespace larlite {
   /**
-     \class MCPartExample
+     \class ComptonBackground
      User custom analysis class made by david
    */
-  class MCPartExample : public ana_base{
+  class ComptonBackground : public ana_base{
   
   public:
 
     /// Default constructor
-    MCPartExample(){ _name="MCPartExample"; _fout=0; _verbose=false; SetProperties(); };
+    ComptonBackground(){ _name="ComptonBackground"; _fout=0; _verbose=false; SetProperties(); };
 
     /// Default destructor
-    virtual ~MCPartExample(){};
+    virtual ~ComptonBackground(){};
 
-    /** IMPLEMENT in MCPartExample.cc!
+    /** IMPLEMENT in ComptonBackground.cc!
         Initialization method to be called before the analysis event loop.
     */ 
     virtual bool initialize();
 
-    /** IMPLEMENT in MCPartExample.cc! 
+    /** IMPLEMENT in ComptonBackground.cc! 
         Analyze a data event-by-event  
     */
     virtual bool analyze(storage_manager* storage);
 
-    /** IMPLEMENT in MCPartExample.cc! 
+    /** IMPLEMENT in ComptonBackground.cc! 
         Finalize method to be called after all events processed.
     */
     virtual bool finalize();
@@ -68,6 +69,8 @@ namespace larlite {
 
     /// Set All Properties
     void SetProperties();
+
+    void ResetTree();
 
     protected:
 
@@ -90,6 +93,8 @@ namespace larlite {
     geoalgo::TrajectoryInVolume _inTPCAlgo;
     /// GeoAlg for point to line dist
     geoalgo::PointToLineDist _pointDist;
+    /// GeoAlg for poka cut
+    geoalgo::TwoLineIntersection _lineIntersection;
 
 
     //Cut Distance
@@ -110,16 +115,21 @@ namespace larlite {
     double _StartX;
     double _StartY;
     double _StartZ;
+    double _PX;
+    double _PY;
+    double _PZ;
     double _StartT;
     double _EndX;
     double _EndY;
     double _EndZ;
     double _minMuonDist;
+    double _minMuonPoka;
     std::vector<std::vector<double> > PartTraj;
     std::vector<std::vector<double> > MotherTraj;
     std::vector<std::vector<double> > AncestorTraj;
     std::string Process;
     std::string ProcHist;
+    int _PDG;
 
   };
 }

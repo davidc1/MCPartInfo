@@ -47,13 +47,14 @@ my_proc.set_ana_output_file("ana.root")
 # To show how one can run multiple analysis modules at once,
 # we make multiple ana_base instance.
 
-example = fmwk.MCPartExample()
-example.SetVerbose(True)
+compton = fmwk.ComptonBackground()
+compton.SetVerbose(False)
 
 # Vector of PDGs to search
 pdgs    = ROOT.vector('int')()
 pdgs.push_back(11)
 pdgs.push_back(13)
+pdgs.push_back(-13)
 
 mcgetter = fmwk.MCgetter()
 mcgetter.getAllPDGs(pdgs)
@@ -61,7 +62,7 @@ mcgetter.getAllPDGs(pdgs)
 mcgetter.SetECut(0.01)
 
 # Tell module what PDGs to search for
-example.SetMCgetter(mcgetter)
+compton.SetMCgetter(mcgetter)
 
 
 #set Process to search for here
@@ -73,11 +74,11 @@ example.SetMCgetter(mcgetter)
 
 # Add analysis modules to the processor
 
-my_proc.add_process(example)
+my_proc.add_process(compton)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 1
+numEvts = 20
 my_proc.run(0,numEvts)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds

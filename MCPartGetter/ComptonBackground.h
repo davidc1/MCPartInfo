@@ -9,7 +9,7 @@
  */
 
 /** \addtogroup MCInfo
-
+    
     @{*/
 
 #ifndef COMPTONBACKGROUND_H
@@ -20,6 +20,7 @@
 #include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
 #include "BasicTool/GeoAlgo/PointToLineDist.h"
 #include "BasicTool/GeoAlgo/TwoLineIntersection.h"
+#include "BasicTool/GeoAlgo/SegmentPoCA.h"
 #include "LArUtil/Geometry.h"
 #include <string>
 
@@ -27,12 +28,12 @@ namespace larlite {
   /**
      \class ComptonBackground
      User custom analysis class made by david
-   */
+  */
   class ComptonBackground : public ana_base{
-  
+    
   public:
 
-    /// Default constructor
+/// Default constructor
     ComptonBackground(){ _name="ComptonBackground"; _fout=0; _verbose=false; SetProperties(); };
 
     /// Default destructor
@@ -95,6 +96,9 @@ namespace larlite {
     geoalgo::PointToLineDist _pointDist;
     /// GeoAlg for poka cut
     geoalgo::TwoLineIntersection _lineIntersection;
+    /// GeoAlg for PoCA cut
+    geoalgo::SegmentPoCA _PoCA;
+
 
 
     //Cut Distance
@@ -124,6 +128,7 @@ namespace larlite {
     double _EndZ;
     double _minMuonDist;
     double _minMuonPoka;
+    double _PoCADist;
     std::vector<std::vector<double> > PartTraj;
     std::vector<std::vector<double> > MotherTraj;
     std::vector<std::vector<double> > AncestorTraj;

@@ -50,6 +50,7 @@ namespace larlite {
     _tree->Branch("AncestorTraj",&AncestorTraj);
     _tree->Branch("_minMuonDist",&_minMuonDist,"minMuonDist/D");
     _tree->Branch("_minMuonPoka",&_minMuonPoka,"minMuonPoka/D");
+    _tree->Branch("_PoCADist",&_PoCADist,"PoCADist/D");
 
 
   }
@@ -163,15 +164,22 @@ namespace larlite {
 	  // Figure out distance to nearest muon
 	  double minDist = 9999999.;
 	  double minPoka = 9999999.;
+	  std::vector<double> c1, c2;
+	  double t1,t2;
+	  double partMom = sqrt(_PX*_PX+_PY*_PY+_PZ*_PZ);
+	  std::vector<double> partDir = {_PX/partMom,_PY/partMom,_PZ/partMom};
+	  std::vector<double> partOrigin = { partStart.at(0)-partDir.at(0)*300,
+					     partStart.at(1)-partDir.at(1)*300,
+					     partStart.at(2)-partDir.at(2)*300 };
+
 	  for (size_t y=0; y < muonTracks.size(); y++){
-	    std::vector<double> muonStart = {muonTracks.at(y).at(0).at(0),
-					     muonTracks.at(y).at(0).at(1),
-					     muonTracks.at(y).at(0).at(2)};
-	    std::vector<double> muonDir = {muonTracks.at(y).back().at(0)-muonTracks.at(y).at(0).at(0),
-					   muonTracks.at(y).back().at(1)-muonTracks.at(y).at(0).at(1),
-					   muonTracks.at(y).back().at(2)-muonTracks.at(y).at(0).at(2)};
-	    std::vector<double> partDir = {_PX,_PY,_PZ};
-	    double tmpPoka = _lineIntersection.Intersection3D(partStart,partDir,muonStart,muonDir).back();
+
+	    double tmpPoka = _PoCA.ClosestApproachToTrajectory(muonTracks.at(y),partOrigin,partStart,c1,c2,t1,t2);
+	    //calculate distance from PoCA point to e- start point
+	    if (c2.size()==3)
+	      _PoCADist = sqrt( (c2.at(0)-partStart.at(0))*(c2.at(0)-partStart.at(0)) +
+				(c2.at(1)-partStart.at(1))*(c2.at(1)-partStart.at(1)) +
+				(c2.at(2)-partStart.at(2))*(c2.at(2)-partStart.at(2)) );
 	    double tmpDist = _pointDist.DistanceToTrack(partStart,muonTracks.at(y));
 	    if (tmpDist < minDist) { minDist = tmpDist; }
 	    if (tmpPoka < minPoka) { minPoka = tmpPoka; }
@@ -183,8 +191,8 @@ namespace larlite {
 	  
 	}//if in TPC
 	else { _inTPC = 0; }
-
-
+	
+	
 	// Now Fill Tree!
 	_tree->Fill();
 	
@@ -194,7 +202,7 @@ namespace larlite {
     
     return true;
   }
-
+  
   bool ComptonBackground::finalize() {
 
     _tree->Write();
@@ -250,6 +258,7 @@ namespace larlite {
       AncestorTraj.clear();
       _minMuonDist = -1;
       _minMuonPoka = -1;
+      _PoCADist    = -1;
     }      
   }
 

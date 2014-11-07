@@ -114,6 +114,7 @@ namespace larlite {
     int    _AncestorPDG;
     double _AncestorDist;
     double _MotherE;
+    double _MotherEndE;
     int    _MotherPDG;
     double _MotherDist;
     double _StartX;
@@ -135,6 +136,23 @@ namespace larlite {
     std::string Process;
     std::string ProcHist;
     int _PDG;
+
+    // muon tree
+    TTree *_muontree;
+    // variables
+    double _muonE;
+    int _muonPDG;
+    double _muonStartX;
+    double _muonStartY;
+    double _muonStartZ;
+    double _muonEndX;
+    double _muonEndY;
+    double _muonEndZ;
+    std::vector<std::vector<double> > MuonTraj;
+
+    //histogram for muon track length
+    TH1D *_hMuonTotLen;
+     
 
   };
 }

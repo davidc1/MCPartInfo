@@ -15,6 +15,8 @@ namespace larlite {
 
     _evtN = 0;
 
+    _hMuonTotLen = new TH1D("hMuonTotLen","Summed Length of All Muons in one Event; Sum length [meters]", 100, 0, 100);
+
     return true;
   }
 
@@ -42,6 +44,7 @@ namespace larlite {
     _tree->Branch("Process",&Process);
     _tree->Branch("_MotherPDG",&_MotherPDG,"MotherPDG/I");
     _tree->Branch("_MotherE",&_MotherE,"MotherE/D");
+    _tree->Branch("_MotherEndE",&_MotherEndE,"MotherEndE/D");
     _tree->Branch("_MotherDist",&_MotherDist,"MotherDist/D");
     _tree->Branch("MotherTraj",&MotherTraj);
     _tree->Branch("_AncestorPDG",&_AncestorPDG,"AncestorPDG/I");
@@ -52,6 +55,18 @@ namespace larlite {
     _tree->Branch("_minMuonPoka",&_minMuonPoka,"minMuonPoka/D");
     _tree->Branch("_PoCADist",&_PoCADist,"PoCADist/D");
 
+
+    if(_muontree) delete _muontree;
+    _muontree = new TTree("muon_tree","");
+    _muontree->Branch("_muonE",&_muonE,"muonE/D");
+    _muontree->Branch("_muonPDG",&_muonPDG,"muonPDG/I");
+    _muontree->Branch("_muonStartX",&_muonStartX,"muonStartX/D");
+    _muontree->Branch("_muonStartY",&_muonStartY,"muonStartY/D");
+    _muontree->Branch("_muonStartZ",&_muonStartZ,"muonStartZ/D");
+    _muontree->Branch("_muonEndX",&_muonEndX,"muonEndX/D");
+    _muontree->Branch("_muonEndY",&_muonEndY,"muonEndY/D");
+    _muontree->Branch("_muonEndZ",&_muonEndZ,"muonEndZ/D");
+    _muontree->Branch("MuonTraj",&MuonTraj);
 
   }
 
@@ -99,20 +114,55 @@ namespace larlite {
     std::cout << "Matches found: " << result.size() << std::endl;
     std::cout << "Muons found:   " << muon.size()+antimuon.size() << std::endl;
 
+    //keep track of total lenght of all muon tracks in event
+    double totMuonLen = 0;
+
     // prepare list of muon tracks (each track a list of 3D points)
     // This will be used for the background cuts
     std::vector< std::vector< std::vector<double> > > muonTracks;
     muonTracks.clear();
     for (size_t h=0; h < muon.size(); h++){
-      std::vector<std::vector<double> > muonTraj = _MCgetter.getTrajectoryPointsInTPC(&(event_part->at(_MCgetter.searchParticleMap(muon.at(h).getNodeIndex()))),0);
-      if (muonTraj.size() > 1)
+      mcpart mu = event_part->at(_MCgetter.searchParticleMap(muon.at(h).getNodeIndex()));
+      _muonE = mu.Trajectory().at(0).E();
+      _muonPDG = mu.PdgCode();
+      std::vector<std::vector<double> > muonTraj = _MCgetter.getTrajectoryPointsInTPC(&mu,0);
+      MuonTraj = muonTraj;
+      if (muonTraj.size() > 1){
 	muonTracks.push_back(muonTraj);
+	_muonStartX = muonTraj.at(0).at(0);
+	_muonStartY = muonTraj.at(0).at(1);
+	_muonStartZ = muonTraj.at(0).at(2);
+	_muonEndX = muonTraj.back().at(0);
+	_muonEndY = muonTraj.back().at(1);
+	_muonEndZ = muonTraj.back().at(2);
+	totMuonLen += sqrt( (_muonEndX - _muonStartX)*(_muonEndX - _muonStartX) +
+			    (_muonEndY - _muonStartY)*(_muonEndY - _muonStartY) +
+			    (_muonEndZ - _muonStartZ)*(_muonEndZ - _muonStartZ) );
+      }//if trajectory size > 1
+      _muontree->Fill();
     }//for all muons
     for (size_t h=0; h < antimuon.size(); h++){
-      std::vector<std::vector<double> > muonTraj = _MCgetter.getTrajectoryPointsInTPC(&(event_part->at(_MCgetter.searchParticleMap(antimuon.at(h).getNodeIndex()))),0);
-      if (muonTraj.size() > 1)
+      mcpart mu = event_part->at(_MCgetter.searchParticleMap(antimuon.at(h).getNodeIndex()));
+      _muonE = mu.Trajectory().at(0).E();
+      _muonPDG = mu.PdgCode();
+      std::vector<std::vector<double> > muonTraj = _MCgetter.getTrajectoryPointsInTPC(&mu,0);
+      MuonTraj = muonTraj;
+      if (muonTraj.size() > 1){
 	muonTracks.push_back(muonTraj);
+	_muonStartX = muonTraj.at(0).at(0);
+	_muonStartY = muonTraj.at(0).at(1);
+	_muonStartZ = muonTraj.at(0).at(2);
+	_muonEndX = muonTraj.back().at(0);
+	_muonEndY = muonTraj.back().at(1);
+	_muonEndZ = muonTraj.back().at(2);
+	totMuonLen += sqrt( (_muonEndX - _muonStartX)*(_muonEndX - _muonStartX) +
+			    (_muonEndY - _muonStartY)*(_muonEndY - _muonStartY) +
+			    (_muonEndZ - _muonStartZ)*(_muonEndZ - _muonStartZ) );
+
+      }//if trajectory size > 1
+      _muontree->Fill();
     }//for all anti-muons
+    _hMuonTotLen->Fill(totMuonLen/100.);
 
     for (size_t j=0; j < result.size(); j++){
 
@@ -148,6 +198,13 @@ namespace larlite {
 		_MotherDist = _pointDist.DistanceToTrack(partStart,MotherTraj);
 	      _MotherPDG = mother.PdgCode();
 	      _MotherE   = mother.Trajectory().at(0).E();
+	      //given time of interaction that produced electron, find step of mother right before and get energy
+	      double tmin = 0;
+	      for (size_t m=0; m < mother.Trajectory().size(); m++){
+		if ( mother.Trajectory().at(m).T() < _StartT )
+		  tmin = m;
+	      }
+	      _MotherEndE   = mother.Trajectory().at(tmin).E();
 	    }//Mother
 	    if (_MCgetter.searchParticleMap(result.at(j).getAncestorId()) >= 0){
 	      mcpart ancestor = event_part->at(_MCgetter.searchParticleMap( result.at(j).getAncestorId() ));
@@ -206,6 +263,8 @@ namespace larlite {
   bool ComptonBackground::finalize() {
 
     _tree->Write();
+    _muontree->Write();
+    _hMuonTotLen->Write();
 
     return true;
   }
@@ -250,6 +309,7 @@ namespace larlite {
       Process    = "";
       _MotherPDG = -1;
       _MotherE   = -1;
+      _MotherEndE= -1;
       _MotherDist = -1;
       MotherTraj.clear();
       _AncestorPDG = -1;

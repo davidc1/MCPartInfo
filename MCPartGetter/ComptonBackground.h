@@ -56,6 +56,8 @@ namespace larlite {
 
     void SetVerbose(bool on) { _verbose = on; }
 
+    void fillPoCAParams(std::vector<double> ePoCA, std::vector<double> eStart, std::vector<double> eDir);
+
     /// Function to set physics process to be analyzed
     void SetProcess(std::vector<int> PDGs, std::vector<std::string> procs);
 
@@ -127,9 +129,12 @@ namespace larlite {
     double _EndX;
     double _EndY;
     double _EndZ;
+    double _PoCAtoAncestor;
+    double _PoCAtoAncestorDist;
     double _minMuonDist;
     double _minMuonPoka;
     double _PoCADist;
+    int _PoCADistAfterStart;
     std::vector<std::vector<double> > PartTraj;
     std::vector<std::vector<double> > MotherTraj;
     std::vector<std::vector<double> > AncestorTraj;

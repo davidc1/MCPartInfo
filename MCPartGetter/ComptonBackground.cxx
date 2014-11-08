@@ -221,7 +221,10 @@ namespace larlite {
 	  // Figure out distance to nearest muon
 	  double minDist = 9999999.;
 	  double minPoka = 9999999.;
-	  std::vector<double> c1, c2;
+	  std::vector<double> c1 = {-1000,-1000,-1000};
+	  std::vector<double> c2 = {-1000,-1000,-1000};
+	  std::vector<double> PoCAPointMU = {-1000,-1000,-1000};
+	  std::vector<double> PoCAPointE = {-1000,-1000,-1000};
 	  double t1,t2;
 	  double partMom = sqrt(_PX*_PX+_PY*_PY+_PZ*_PZ);
 	  std::vector<double> partDir = {_PX/partMom,_PY/partMom,_PZ/partMom};
@@ -229,23 +232,42 @@ namespace larlite {
 					     partStart.at(1)-partDir.at(1)*300,
 					     partStart.at(2)-partDir.at(2)*300 };
 
+	  std::cout << "Electron Momentum      : [" << partDir.at(0) << "," << partDir.at(1) 
+		    << ", " << partDir.at(2) << "]" << std::endl;
+	  std::cout << "Electron Start Point   : [" << partStart.at(0) << "," << partStart.at(1) 
+		    << ", " << partStart.at(2) << "]" << std::endl;
+	  std::cout << "Electron Origin Point  : [" << partOrigin.at(0) << "," << partOrigin.at(1) 
+		    << ", " << partOrigin.at(2) << "]" << std::endl;
+
+
 	  for (size_t y=0; y < muonTracks.size(); y++){
 
 	    double tmpPoka = _PoCA.ClosestApproachToTrajectory(muonTracks.at(y),partOrigin,partStart,c1,c2,t1,t2);
 	    //calculate distance from PoCA point to e- start point
-	    if (c2.size()==3)
-	      _PoCADist = sqrt( (c2.at(0)-partStart.at(0))*(c2.at(0)-partStart.at(0)) +
-				(c2.at(1)-partStart.at(1))*(c2.at(1)-partStart.at(1)) +
-				(c2.at(2)-partStart.at(2))*(c2.at(2)-partStart.at(2)) );
 	    double tmpDist = _pointDist.DistanceToTrack(partStart,muonTracks.at(y));
 	    if (tmpDist < minDist) { minDist = tmpDist; }
-	    if (tmpPoka < minPoka) { minPoka = tmpPoka; }
+	    if (tmpPoka < minPoka) {
+	      minPoka = tmpPoka;
+	      PoCAPointE = c2;
+	      PoCAPointMU  = c1;
+	    }
 	  }
 	  if (minDist == 9999999.) { minDist = -1; }
 	  if (minPoka == 9999999.) { minPoka = -1; }
 	  _minMuonDist = minDist;
 	  _minMuonPoka = minPoka;
-	  
+	  _PoCADist = sqrt( (PoCAPointE.at(0)-partStart.at(0))*(PoCAPointE.at(0)-partStart.at(0)) +
+			    (PoCAPointE.at(1)-partStart.at(1))*(PoCAPointE.at(1)-partStart.at(1)) +
+			    (PoCAPointE.at(2)-partStart.at(2))*(PoCAPointE.at(2)-partStart.at(2)) );
+	  /*	  
+	  std::cout << "Poca Point on mu Track : [" << PoCAPointMU.at(0) << "," << PoCAPointMU.at(1) 
+		    << ", " << PoCAPointMU.at(2) << "]" << std::endl;
+	  std::cout << "PoCA Point on e- Track : [" << PoCAPointE.at(0) << "," << PoCAPointE.at(1) 
+		    << ", " << PoCAPointE.at(2) << "]" << std::endl;
+	  std::cout << "PoCA Dist to Electron Start: " << _PoCADist << std::endl;
+	  std::cout << "Impact Parameter : " << _minMuonPoka << std::endl;
+	  std::cout << "Process: " << Process << std::endl << std::endl;
+	  */
 	}//if in TPC
 	else { _inTPC = 0; }
 	

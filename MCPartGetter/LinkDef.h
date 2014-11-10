@@ -14,6 +14,8 @@
 #pragma link C++ class TreeNode+;
 #pragma link C++ class TreeTop+;
 #pragma link C++ class larlite::ComptonBackground+;
+#pragma link C++ class larlite::CountEvents+;
+#pragma link C++ class larlite::CosmicTracks+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif

@@ -16,6 +16,9 @@
 #pragma link C++ class larlite::ComptonBackground+;
 #pragma link C++ class larlite::CountEvents+;
 #pragma link C++ class larlite::CosmicTracks+;
+#pragma link C++ class larlite::MakeShowers+;
+#pragma link C++ class larlite::MakeMCTree+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+

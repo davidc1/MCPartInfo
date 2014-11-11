@@ -90,6 +90,12 @@ namespace larlite {
     /// get Trajectory Points - if in TPC (buffer denotes extra distance, in all directions, to save track)
     std::vector<std::vector<double> > getTrajectoryPointsInTPC(mcpart *part, double buffer);
 
+    /// get Trajectory Points before TPC - if in TPC (buffer denotes extra distance, in all directions, to save track)
+    std::vector<std::vector<double> > getTrajectoryPointsBeforeTPC(mcpart *part, double buffer, int& intpc);
+
+    /// get Energy Points - if in TPC (buffer denotes extra distance, in all directions, to save track)
+    std::vector<double> getEnergyPointsInTPC(mcpart *part, double buffer);
+
     /// get Start-End Trajectory Points
     std::vector<std::vector<double> > getStartEndTrajectory(mcpart *part);
 
@@ -102,6 +108,17 @@ namespace larlite {
     /// Get TreeNodes list
     std::vector<std::vector<TreeNode> > getTreeNodelist() { return _TreeNodes; }
 
+    /// find MC showers
+    void findMCShowers(TreeNode node);
+
+    /// make MC shower
+    void makeMCShower(TreeNode node);
+
+    /// get shower particles
+    void getAllShowerParticles(TreeNode node, std::vector<int> &thisShower);
+
+    /// get All MCShowers
+    std::vector<std::vector<int> > getAllShowers() { return _MCShowers; }
 
     /// Find PDG list
     std::vector<int> findPDGlist(int pdgcode);
@@ -145,6 +162,10 @@ namespace larlite {
 
     /// PDGlist: vector vector of particle TreeNodes that match pdg list being searched. One element of outer vector per PDG given
     std::vector<std::vector<TreeNode> > _TreeNodes;
+
+    /// List of MCShowers. Each element is a list of TrackIDs
+    /// The first entry is the first charged particle in the shower
+    std::vector<std::vector<int> > _MCShowers;
 
   };
 }

@@ -41,6 +41,8 @@ namespace larlite {
      _TreeNodes.clear();
      _TreeNodes.resize(_getPDGs.size());
 
+     _MCShowers.clear();
+
      for (size_t i=0; i < _event_part->size(); i++){
        mcpart part = _event_part->at(i);
        if (part.Process() == "primary"){
@@ -100,6 +102,62 @@ namespace larlite {
      return;
    }
 
+  void MCgetter::findMCShowers(TreeNode node){
+
+    //    if (node.getChildren().size() != 0){
+    //      std::cout << "got a new tree!" << std::endl;
+    //      std::cout << "Children: " << node.getChildren().size() << std::endl;
+    //    }
+    // find the first instance in which a e-/e+ appears
+    // this is the beginning of the shower
+    if ( abs(_event_part->at(this->searchParticleMap(node.getNodeIndex())).PdgCode()) == 11 ){
+      if ( _event_part->at(this->searchParticleMap(node.getNodeIndex())).Trajectory().at(0).E() > _Ecut ){
+	//	if (node.getChildren().size() != 0) { std::cout << "passed the cut! make shower! " << std::endl; }
+	makeMCShower(node);
+      }
+    }
+    else{
+      std::vector<TreeNode> children = node.getChildren();
+      //      if (node.getChildren().size() != 0) { std::cout << "looping through children: " << children.size() << std::endl; }
+      for (size_t i=0; i < children.size(); i++)
+	findMCShowers(children.at(i));
+    }
+
+    //    if (node.getChildren().size() != 0) { std::cout << "done with this tree..." << std::endl << std::endl; }
+    return;
+  }
+  
+  
+  void MCgetter::makeMCShower(TreeNode node){
+    
+    // we have the top node of the shower
+    // now go through daughters, and if
+    // they are e-/e+ add them to list of shower particles
+    std::cout << "Making shower! Children nodes: " << node.getChildren().size() << std::endl;
+    std::vector<int> thisShower;
+    thisShower.clear();
+    thisShower.push_back(node.getNodeIndex());
+    getAllShowerParticles(node, thisShower);
+    _MCShowers.push_back(thisShower);
+    
+    return;
+  }
+  
+  void MCgetter::getAllShowerParticles(TreeNode node, std::vector<int> &thisShower){
+    
+    //loop over all children of node and add charged particles to shower vector
+    std::vector<TreeNode> daughters = node.getChildren();
+    if (daughters.size() == 0) { return; }
+    for (size_t i=0; i < daughters.size(); i++){
+      if ( abs( _event_part->at(this->searchParticleMap(daughters.at(i).getNodeIndex())).PdgCode() ) == 11 )
+	thisShower.push_back(daughters.at(i).getNodeIndex());
+      getAllShowerParticles(daughters.at(i), thisShower);
+    }
+    
+    return;
+  }
+  
+  
   
   std::vector<int> MCgetter::findPDGlist(int pdgcode){
     
@@ -330,10 +388,60 @@ namespace larlite {
     
     mctrajectory traj = part->Trajectory();
     for (size_t i=0; i < traj.size(); i++){
-      if ( (traj.at(i).X() > (0-buffer)) and (traj.at(i).X() < 2*detHalfWidth) and
+      if ( (traj.at(i).X() > (0-buffer)) and (traj.at(i).X() < (2*detHalfWidth+buffer)) and
 	   (traj.at(i).Y() > (-detHalfHeight-buffer)) and (traj.at(i).Y() < (detHalfHeight+buffer)) and
 	   (traj.at(i).Z() > (0-buffer)) and (traj.at(i).Z() < (detLength+buffer)) )
 	points.push_back({traj.at(i).X(), traj.at(i).Y(), traj.at(i).Z()});
+    }
+    return points;
+  }
+
+
+  //-------------------------------------------------------------------------------
+  std::vector<std::vector<double> > MCgetter::getTrajectoryPointsBeforeTPC(mcpart *part, double buffer, int& intpc){
+    
+    std::vector<std::vector<double> > points;
+    points.clear();
+    
+    double detLength = larutil::Geometry::GetME()->DetLength();
+    double detHalfWidth = larutil::Geometry::GetME()->DetHalfWidth();
+    double detHalfHeight = larutil::Geometry::GetME()->DetHalfHeight();
+    intpc = 0;
+    mctrajectory traj = part->Trajectory();
+    for (size_t i=0; i < traj.size(); i++){
+      if ( (traj.at(i).X() > (0-buffer)) and (traj.at(i).X() < (2*detHalfWidth+buffer)) and
+	   (traj.at(i).Y() > (-detHalfHeight-buffer)) and (traj.at(i).Y() < (detHalfHeight+buffer)) and
+	   (traj.at(i).Z() > (0-buffer)) and (traj.at(i).Z() < (detLength+buffer)) )
+	points.push_back({traj.at(i).X(), traj.at(i).Y(), traj.at(i).Z()});
+
+      if ( (traj.at(i).X() > 0) and (traj.at(i).X() < 2*detHalfWidth) and
+	   (traj.at(i).Y() > -detHalfHeight) and (traj.at(i).Y() < detHalfHeight) and
+	   (traj.at(i).Z() > 0) and (traj.at(i).Z() < detLength) ){
+	intpc = 1;
+	break;
+      }
+    }//for all trajectory points
+    
+    return points;
+  }
+
+
+  //-------------------------------------------------------------------------------
+  std::vector<double> MCgetter::getEnergyPointsInTPC(mcpart *part, double buffer){
+    
+    std::vector<double> points;
+    points.clear();
+    
+    double detLength = larutil::Geometry::GetME()->DetLength();
+    double detHalfWidth = larutil::Geometry::GetME()->DetHalfWidth();
+    double detHalfHeight = larutil::Geometry::GetME()->DetHalfHeight();
+    
+    mctrajectory traj = part->Trajectory();
+    for (size_t i=0; i < traj.size(); i++){
+      if ( (traj.at(i).X() > (0-buffer)) and (traj.at(i).X() < (2*detHalfWidth+buffer)) and
+	   (traj.at(i).Y() > (-detHalfHeight-buffer)) and (traj.at(i).Y() < (detHalfHeight+buffer)) and
+	   (traj.at(i).Z() > (0-buffer)) and (traj.at(i).Z() < (detLength+buffer)) )
+	points.push_back(traj.at(i).E());
     }
     return points;
   }

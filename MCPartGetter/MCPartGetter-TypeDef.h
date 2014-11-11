@@ -13,6 +13,8 @@
 #include "ComptonBackground.h"
 #include "CountEvents.h"
 #include "CosmicTracks.h"
+#include "MakeShowers.h"
+#include "MakeMCTree.h"
 //ADD_NEW_HEADER ... do not change this comment line
 
 // Class forward declaration here
@@ -23,7 +25,9 @@ namespace larlite {
   class ComptonBackground;
   class CountEvents;
   class CosmicTracks;
+  class MakeShowers;
 
+  class MakeMCTree;
 //ADD_ANA_CLASS ... do not change this comment line
 
 }
@@ -32,3 +36,4 @@ class TreeNode;
 class TreeTop;
 //ADD_EMPTY_CLASS ... do not change this comment line
 #endif
+

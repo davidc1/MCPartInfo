@@ -55,7 +55,7 @@ my_proc.add_process(makeshowers)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 2
+numEvts = 15
 my_proc.run(0,numEvts)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds

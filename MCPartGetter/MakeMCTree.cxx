@@ -26,7 +26,7 @@ namespace larlite {
     // now can go through the map and add trees to evt_tree
     setTrees(evt_tree, evt_part);
   
-    evt_part->clear();
+    //evt_part->clear();
 
     int tot = 0;
     int thesenodes = 0;

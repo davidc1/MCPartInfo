@@ -47,7 +47,8 @@ namespace larlite {
     void findMCShowers(treenode tree,
 		       event_mcpart *evt_part,
 		       event_mctree *evt_tree,
-		       event_mcshower *evt_mcshower);
+		       event_mcshower *evt_mcshower,
+		       bool inshower);
 
     void makeMCShower(treenode tree,
 		      event_mcpart *evt_part,
@@ -85,6 +86,7 @@ namespace larlite {
     double _showerStartZ;
     std::vector<std::vector<std::vector<double> > > ShowerTraj;
     int _inTPC;
+    int _eventN;
     std::string Process;
 
     //mcgetter

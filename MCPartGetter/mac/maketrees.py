@@ -22,7 +22,7 @@ from ROOT import larlite as fmwk
 my_proc=fmwk.ana_processor()
 
 # Specify IO mode
-my_proc.set_io_mode(fmwk.storage_manager.kREAD)
+my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 #my_proc.set_io_mode(storage_manager.WRITE)
 #my_proc.set_io_mode(storage_manager.BOTH)
 
@@ -41,7 +41,7 @@ my_proc.add_input_file(sys.argv[1])
 
 # Set output root file: this is a separate root file in which your
 # analysis module can store anything such as histograms, your own TTree, etc.
-my_proc.set_ana_output_file("ana.root")
+my_proc.set_output_file("ana.root")
 
 # Create analysis class instance. For this example, ana_base.
 # To show how one can run multiple analysis modules at once,

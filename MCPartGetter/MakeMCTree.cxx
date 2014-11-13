@@ -14,21 +14,33 @@ namespace larlite {
   bool MakeMCTree::analyze(storage_manager* storage) {
 
     // get mcpart data. This is the input
-    auto *event_part = (event_mcpart*)(storage->get_data(data::kMCParticle,"largeant"));
+    auto evt_part = storage->get_data<event_mcpart>("largeant");
+    // create new evt_tree object...will fill it later
+    auto evt_tree = storage->get_data<event_mctree>("davidc");
 
-    // create new event_tree object...will fill it later
-    auto *event_tree = (event_mctree*)(storage->get_data(data::kMCTree,""));
+    std::cout << "Number of mcparticles: " << evt_part->size() << std::endl;;
 
     // first need to make map
-    setParticleMap(event_tree, event_part);
+    setParticleMap(evt_tree, evt_part);
 
-    // now can go through the map and add trees to event_tree
-    setTrees(event_tree, event_part);
+    // now can go through the map and add trees to evt_tree
+    setTrees(evt_tree, evt_part);
   
-    event_part->clear();
+    evt_part->clear();
 
-    std::cout << event_tree->size() << std::endl;
+    int tot = 0;
+    int thesenodes = 0;
+    for (size_t i=0; i < evt_tree->size(); i++){
+      thesenodes = 0;
+      evt_tree->at(i).countNodes(thesenodes);
+      tot += thesenodes;
+    }
 
+    // set event number etc
+    evt_tree->set_subrun(evt_part->subrun());
+    evt_tree->set_run(evt_part->run());
+    evt_tree->set_event_id(evt_part->event_id());
+    std::cout << "number of nodes: " << tot << std::endl;
     return true;
   }
 
@@ -37,10 +49,10 @@ namespace larlite {
     return true;
   }
 
-  void MakeMCTree::setParticleMap(event_mctree *event_tree, event_mcpart *event_part){
+  void MakeMCTree::setParticleMap(event_mctree *evt_tree, event_mcpart *evt_part){
 
-    // if event_part empty return
-    if (event_part->size() == 0){
+    // if evt_part empty return
+    if (evt_part->size() == 0){
       std::cout << "Event Part not filled...exit" << std::endl;
       return;
     }
@@ -49,14 +61,15 @@ namespace larlite {
     _ParticleMap.clear();
 
     //clear map before filling it
-    event_tree->clearMap();
+    //evt_tree->clearMap();
      //Fill the Map for particles and trackIDs
-    for (size_t i=0; i < event_part->size(); i++){
-      _ParticleMap[event_part->at(i).TrackId()] = i;
-    }//for all particles in event_part
+    for (size_t i=0; i < evt_part->size(); i++){
+      //evt_tree->AddMapEntry(evt_part->at(i).TrackId(),i);
+      _ParticleMap[evt_part->at(i).TrackId()] = i;
+    }//for all particles in evt_part
     
-    // set this map for the event_tree object
-    event_tree->setMap(_ParticleMap);
+    // set this map for the evt_tree object
+    evt_tree->setMap(_ParticleMap);
 
     return;
   } 
@@ -74,23 +87,23 @@ namespace larlite {
   }
 
 
-  void MakeMCTree::setTrees(event_mctree *event_tree, event_mcpart *event_part){
+  void MakeMCTree::setTrees(event_mctree *evt_tree, event_mcpart *evt_part){
 
-     // if event_part empty return
-     if (event_part->size() == 0){
+     // if evt_part empty return
+     if (evt_part->size() == 0){
        std::cout << "Event Part not filled...exit" << std::endl;
        return;
      }
 
-     for (size_t i=0; i < event_part->size(); i++){
-       mcpart part = event_part->at(i);
-       if (part.Process() == "primary"){
+     for (size_t i=0; i < evt_part->size(); i++){
+       mcpart part = evt_part->at(i);
+       if (part.Mother() == 0){
 	 mctree node(part.TrackId());
 	 node.setPrimary(true);
 	 node.setAncestorId(part.TrackId());
 	 // add all sub-nodes for this root node
-	 //	 AddNodes(part, node, part.TrackId(), event_part);
-	 event_tree->push_back(node);
+	 AddNodes(part, node, part.TrackId(), evt_part);
+	 evt_tree->push_back(node);
        }// if the process is primary -> new root node
      }// for all particles
 
@@ -98,19 +111,19 @@ namespace larlite {
   }
 
 
-  void MakeMCTree::AddNodes(mcpart part, treenode& parentnode, int ancestor, event_mcpart *event_part){
+  void MakeMCTree::AddNodes(mcpart part, treenode& parentnode, int ancestor, event_mcpart *evt_part){
 
     std::set<Int_t> daughters = part.Daughters();
     //loop over daugher iterator -> add daughters to node
     for (std::set<int>::iterator it=daughters.begin(); it!=daughters.end(); ++it){
-      mcpart tmpPart = event_part->at(this->searchParticleMap(it));
+      mcpart tmpPart = evt_part->at(this->searchParticleMap(it));
       ::treenode tmpnode(tmpPart.TrackId());
       tmpnode.setParentId(part.TrackId());
       tmpnode.setAncestorId(ancestor);
       tmpnode.setPrimary(false);
       //use recursion to fill this node's children as well
+      AddNodes(tmpPart, tmpnode, ancestor, evt_part);
       parentnode.AddChild(tmpnode);
-      AddNodes(tmpPart, tmpnode, ancestor, event_part);
     }
 
     return;

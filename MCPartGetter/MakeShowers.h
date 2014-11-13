@@ -17,11 +17,6 @@
 
 #include "Analysis/ana_base.h"
 #include "MCgetter.h"
-#include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
-#include "BasicTool/GeoAlgo/PointToLineDist.h"
-#include "BasicTool/GeoAlgo/TwoLineIntersection.h"
-#include "BasicTool/GeoAlgo/SegmentPoCA.h"
-#include "LArUtil/Geometry.h"
 #include <string>
 
 namespace larlite {
@@ -34,69 +29,55 @@ namespace larlite {
   public:
 
 /// Default constructor
-    MakeShowers(){ _name="MakeShowers"; _fout=0; _verbose=false; SetProperties(); };
+    MakeShowers(){ _name="MakeShowers"; _fout=0; _verbose=false; _Ecut = 0; };
 
     /// Default destructor
     virtual ~MakeShowers(){};
 
-    /** IMPLEMENT in MakeShowers.cc!
-        Initialization method to be called before the analysis event loop.
-    */ 
     virtual bool initialize();
 
-    /** IMPLEMENT in MakeShowers.cc! 
-        Analyze a data event-by-event  
-    */
     virtual bool analyze(storage_manager* storage);
 
-    /** IMPLEMENT in MakeShowers.cc! 
-        Finalize method to be called after all events processed.
-    */
     virtual bool finalize();
 
     void SetVerbose(bool on) { _verbose = on; }
 
-    void SetProperties();
+    void SetEcut(double E) { _Ecut = E; }
 
-    /// Set MCgetter object
-    void SetMCgetter(MCgetter mcgetter) { _MCgetter = mcgetter; }
+    void findMCShowers(treenode tree,
+		       event_mcpart *evt_part,
+		       event_mctree *evt_tree,
+		       event_mcshower *evt_mcshower);
 
-    /// prepare TTree
-    void prepareTree();
+    void makeMCShower(treenode tree,
+		      event_mcpart *evt_part,
+		      event_mctree *evt_tree,
+		      event_mcshower *evt_mcshower);
 
+    void getAllShowerParticles(treenode tree,
+			       std::vector<unsigned int> &trackIDs,
+			       event_mcpart *evt_part,
+			       event_mctree *evt_tree);
+
+    void PrepareTree();
     void ResetTree();
+    
 
     protected:
-
-    /// Process to be searched
-    std::vector<std::pair<int,std::string> > _process;
 
     /// verbose
     bool _verbose;
 
-    /// double Energy cut
-    double _Ecut;
-
     /// Event number
     int _evtN;
 
-    /// MCgetter to make mc particle map
-    MCgetter _MCgetter;
-
-    /// GeoAlg for TPC containment
-    geoalgo::TrajectoryInVolume _inTPCAlgo;
-    /// GeoAlg for point to line dist
-    geoalgo::PointToLineDist _pointDist;
-    /// GeoAlg for poka cut
-    geoalgo::TwoLineIntersection _lineIntersection;
-    /// GeoAlg for PoCA cut
-    geoalgo::SegmentPoCA _PoCA;
+    /// Energy cut for shower creation [ GeV ]
+    double _Ecut;
 
 
-    // shower tree
+    // Tree information
     TTree *_showertree;
-    // variables
-    int _showerDaughters;
+    // variables for tree
     double _showerE;
     int _showerPDG;
     double _showerStartX;
@@ -104,6 +85,10 @@ namespace larlite {
     double _showerStartZ;
     std::vector<std::vector<std::vector<double> > > ShowerTraj;
     int _inTPC;
+    std::string Process;
+
+    //mcgetter
+    MCgetter _MCgetter;
 
   };
 }

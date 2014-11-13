@@ -43,15 +43,17 @@ f = ROOT.TFile("makeshowers.root")
 
 m = f.Get("shower_tree")
 
+colorlist = ['b','g','y','k','c','r','w']
+color = 0
 
 showerEntries = m.GetEntries()
 for j in range(showerEntries):
     
     m.GetEntry(j)
 
+    color += 1
 
-
-    if ( m.ShowerTraj and (m.inTPC==1) and (m.showerDaughters > 1) ):
+    if ( m.ShowerTraj and (m.inTPC==1) ):
         showerTracks = m.ShowerTraj.size()
         
         for x in range(showerTracks):
@@ -68,13 +70,13 @@ for j in range(showerEntries):
                 YpointsShower = np.append( YpointsShower, thistrack.at(n).at(1) )
                 ZpointsShower = np.append( ZpointsShower, thistrack.at(n).at(2) )
 
-            plt.plot(ZpointsShower,YpointsShower,col(m.showerPDG),markersize=2);
+            plt.plot(ZpointsShower,YpointsShower,colorlist[color%7],markersize=2);
 
 
 plt.title("Muon Tracks - YZ Projection - All Muons that Enter TPC",fontsize=20)
 #plt.xlim([0-1100,2*detHalfWidth+1100])
-plt.xlim([0-9050,detLength+9050])
-plt.ylim([-detHalfHeight-9050,detHalfHeight+9050])
+plt.xlim([0-50,detLength+50])
+plt.ylim([-detHalfHeight-50,detHalfHeight+50])
 plt.xlabel("Z Position - Aligned with Beam Direction - [cm]",fontsize=20)
 #plt.xlabel("X Position - Aligned with Electric Field - [cm]",fontsize=20)
 plt.ylabel("Y Position - Vertical Direction - [cm]",fontsize=20)

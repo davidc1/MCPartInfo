@@ -22,7 +22,7 @@ from ROOT import larlite as fmwk
 my_proc=fmwk.ana_processor()
 
 # Specify IO mode
-my_proc.set_io_mode(fmwk.storage_manager.kREAD)
+my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 #my_proc.set_io_mode(storage_manager.WRITE)
 #my_proc.set_io_mode(storage_manager.BOTH)
 
@@ -41,7 +41,7 @@ my_proc.add_input_file(sys.argv[1])
 
 # Set output root file: this is a separate root file in which your
 # analysis module can store anything such as histograms, your own TTree, etc.
-my_proc.set_ana_output_file("makeshowers.root")
+my_proc.set_output_file("makeshowers.root")
 
 # Create analysis class instance. For this example, ana_base.
 # To show how one can run multiple analysis modules at once,
@@ -49,29 +49,13 @@ my_proc.set_ana_output_file("makeshowers.root")
 
 makeshowers = fmwk.MakeShowers()
 makeshowers.SetVerbose(False)
-
-mcgetter = fmwk.MCgetter()
-# Energy cut: If PDG match && E > _ECut [GeV] then add particle
-mcgetter.SetECut(0.1)
-
-# Tell module what PDGs to search for
-makeshowers.SetMCgetter(mcgetter)
-
-
-#set Process to search for here
-#strings = ROOT.vector('string')()
-#strings.push_back("primary")
-#strings.push_back("compt")
-#background.SetProcess(pdgs,strings);
-
-
-# Add analysis modules to the processor
+makeshowers.SetEcut(0.01)
 
 my_proc.add_process(makeshowers)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 10
+numEvts = 2
 my_proc.run(0,numEvts)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds

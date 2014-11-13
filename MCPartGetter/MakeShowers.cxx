@@ -8,22 +8,18 @@ namespace larlite {
 
   bool MakeShowers::initialize() {
 
-    if (_verbose) { _MCgetter.SetVerbose(true); }
-
-    /// Prepare Tree
-    prepareTree();
-
     _evtN = 0;
+
+    PrepareTree();
 
     return true;
   }
 
 
-  void MakeShowers::prepareTree(){
+  void MakeShowers::PrepareTree(){
 
     if(_showertree) delete _showertree;
     _showertree = new TTree("shower_tree","");
-    _showertree->Branch("_showerDaughters",&_showerDaughters,"showerDaughters/I");
     _showertree->Branch("_showerE",&_showerE,"showerE/D");
     _showertree->Branch("_showerPDG",&_showerPDG,"showerPDG/I");
     _showertree->Branch("_showerStartX",&_showerStartX,"showerStartX/D");
@@ -31,95 +27,178 @@ namespace larlite {
     _showertree->Branch("_showerStartZ",&_showerStartZ,"showerStartZ/D");
     _showertree->Branch("ShowerTraj",&ShowerTraj);
     _showertree->Branch("_inTPC",&_inTPC,"inTPC/I");
-
+    _showertree->Branch("Process",&Process);
+    
   }
-
-  void MakeShowers::SetProperties(){
-
-    /// set volume for TrajectoryInVolume algorithm
-    _inTPCAlgo.SetVolume( 0, 
-			  2*(::larutil::Geometry::GetME()->DetHalfWidth()),
-			  -(::larutil::Geometry::GetME()->DetHalfHeight()),
-			  ::larutil::Geometry::GetME()->DetHalfHeight(),
-			  0,
-			  ::larutil::Geometry::GetME()->DetLength());
-  }
-
   
+
+
   bool MakeShowers::analyze(storage_manager* storage) {
 
-    auto *event_part = (event_mcpart*)(storage->get_data(data::kMCParticle,"largeant"));
+    // get mcpart data. This is the input
+    auto evt_part = storage->get_data<event_mcpart>("largeant");
+    // get mctree data
+    auto evt_tree = storage->get_data<event_mctree>("davidc");
+    // create new mcshowers
+    auto evt_mcshower = storage->get_data<event_mcshower>("davidc");
 
-    if (!event_part) {
+
+    evt_mcshower->set_subrun(evt_part->subrun());
+    evt_mcshower->set_run(evt_part->run());
+    evt_mcshower->set_event_id(evt_part->event_id());
+
+
+    if (!evt_part) {
       std::cout << "Noooo! " << std::endl;
       return false;
     }
 
-    // make the particle map & Tree-structure
-    _MCgetter.Reset(event_part);
-
     // Now Call Shower Maker from MCgetter
     // Needs to be called from each primary (i.e. TreeTop)
     // because it digs into the tree structure and finds showers
-    std::cout << "Number of TreeTops: " << _MCgetter.getTreeTops().size() << std::endl;
-    for (size_t i=0; i < _MCgetter.getTreeTops().size(); i++)
-      _MCgetter.findMCShowers(_MCgetter.getTreeTops().at(i));
+    for (size_t i=0; i < evt_tree->size(); i++)
+      findMCShowers(evt_tree->at(i), evt_part, evt_tree, evt_mcshower);
 
-    // now get all showers
-    std::vector<std::vector<int> > showers = _MCgetter.getAllShowers();
-    std::cout << "Number of showers in event: " << showers.size() << std::endl;
-
-    // loop over showers and fill tree
-    for (size_t j=0; j < showers.size(); j++){
-      ResetTree();
-      std::vector<int> thisshower = showers.at(j);
-      if ( _MCgetter.searchParticleMap(thisshower.at(0)) > 0 ){
-	mcpart showerTop = event_part->at(_MCgetter.searchParticleMap(thisshower.at(0)));
-	_showerDaughters = thisshower.size();
-	_inTPC = 0;
-	_showerE      = showerTop.Trajectory().at(0).E();
-	_showerStartX = showerTop.Trajectory().at(0).X();
-	_showerStartY = showerTop.Trajectory().at(0).Y();
-	_showerStartZ = showerTop.Trajectory().at(0).Z();
-	_showerPDG    = showerTop.PdgCode();
-	// now get trajectories (in TPC only)
-	for (size_t u=0; u < thisshower.size(); u++){
-	  mcpart tmppart = event_part->at(_MCgetter.searchParticleMap(thisshower.at(u)));
-	  std::vector<std::vector<double> > thistrack = _MCgetter.getTrajectoryPoints(&tmppart);
-	  if (thistrack.size() > 1){
-	    _inTPC = 1;
-	    ShowerTraj.push_back(thistrack);
-	  }
-	}//for all particles in the shower
-	std::cout << "Energy : " << _showerE << "\tdaughters: " << _showerDaughters 
-		  << "\tinTPC: " << _inTPC << "\tMCDaughters: " << showerTop.Daughters().size()
-		  << std::endl;
-	_showertree->Fill();
-      }
-    }
-      
-    
     _evtN += 1;
-    
+
+    evt_part->clear();
+
     return true;
   }
   
   bool MakeShowers::finalize() {
 
     _showertree->Write();
+
     return true;
   }
 
+  void MakeShowers::findMCShowers(treenode tree, event_mcpart *evt_part, event_mctree *evt_tree, event_mcshower *evt_mcshower){
+
+    // if this particle has PDG == 22 AND
+    // if any of the daughters of a particle are PDG == 11 or -11
+    // then this particle should make a shower
+    if ( abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 22 ) {
+      std::vector<::treenode> children = tree.getChildren();
+      bool isShower = false;
+      for (size_t i=0; i < children.size(); i++){
+	if ( abs(evt_part->at( evt_tree->searchParticleMap(children.at(i).getNodeIndex()) ).PdgCode()) == 11 )
+	  isShower = true;
+      }// for all children
+      
+      if (isShower and (evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Trajectory().at(0).E() > _Ecut) ){
+	makeMCShower(tree, evt_part, evt_tree, evt_mcshower);
+      }
+    } // if particle's PDG == 22 and above energy cut
+    
+    // otherwise...keep on looking
+    else{
+      std::vector<::treenode> children = tree.getChildren();
+      for (size_t i=0; i < children.size(); i++)
+	findMCShowers(children.at(i), evt_part, evt_tree, evt_mcshower);
+    }
+    
+    return;
+  }
+
+  void MakeShowers::makeMCShower(treenode tree, event_mcpart *evt_part, event_mctree *evt_tree, event_mcshower *evt_mcshower){
+
+    //first clear tree
+    ResetTree();
+
+    // object to be filled
+    mcshower shr;
+
+    //get all daughter charged particles to make up the shower
+    std::vector<unsigned int> showerPartTrackIDs;
+    getAllShowerParticles(tree, showerPartTrackIDs, evt_part, evt_tree);
+    // add al daughter tracks
+    shr.DaughterTrackID(showerPartTrackIDs);
+
+    //get particle that generates shower
+    mcpart thispart = evt_part->at(evt_tree->searchParticleMap(tree.getNodeIndex()));
+    shr.PdgCode(thispart.PdgCode());
+    shr.Process(thispart.Process());
+    shr.TrackID(thispart.TrackId());
+    shr.Start(thispart.Trajectory().at(0));
+    shr.End(thispart.Trajectory().back());
+
+    _showerE = thispart.Trajectory().at(0).E();
+    _showerStartX = thispart.Trajectory().at(0).X();
+    _showerStartY = thispart.Trajectory().at(0).Y();
+    _showerStartZ = thispart.Trajectory().at(0).Z();
+    if (ShowerTraj.size() == 0)
+      _inTPC = 0;
+    else{
+      _inTPC = 1;
+      int totpoints = 0;
+      for (size_t u=0; u < ShowerTraj.size(); u++)
+	totpoints += ShowerTraj.at(u).size();
+      std::cout << "Shower E: " << _showerE << "\tTrajectory Points: " << totpoints << std::endl;
+      _showertree->Fill();
+    }
+    
+    _showerPDG = thispart.PdgCode();
+    Process = thispart.Process();
+
+
+    // mother of showering particle
+    mcpart mother = evt_part->at(evt_tree->searchParticleMap(tree.getParentId()));
+    shr.MotherPdgCode(mother.PdgCode());
+    shr.MotherProcess(mother.Process());
+    shr.MotherTrackID(mother.TrackId());
+    shr.MotherStart(mother.Trajectory().at(0));
+    shr.MotherEnd(mother.Trajectory().back());
+
+    // mother of showering particle
+    mcpart ancestor = evt_part->at(evt_tree->searchParticleMap(tree.getAncestorId()));
+    shr.AncestorPdgCode(ancestor.PdgCode());
+    shr.AncestorProcess(ancestor.Process());
+    shr.AncestorTrackID(ancestor.TrackId());
+    shr.AncestorStart(ancestor.Trajectory().at(0));
+    shr.AncestorEnd(ancestor.Trajectory().back());
+
+    evt_mcshower->push_back(shr);
+    
+    return;
+  }
+
+
+  void MakeShowers::getAllShowerParticles(treenode tree, std::vector<unsigned int> &trackIDs, event_mcpart *evt_part, event_mctree *evt_tree){
+    
+    //loop over all children of node and add charged particles to shower vector
+    std::vector<treenode> daughters = tree.getChildren();
+    if (daughters.size() == 0) { return; }
+    for (size_t i=0; i < daughters.size(); i++){
+      trackIDs.push_back(daughters.at(i).getNodeIndex());
+      //if e-/e+ add track info to ShowerTraj
+      if ( abs(evt_part->at(evt_tree->searchParticleMap(tree.getNodeIndex())).PdgCode()) == 11 ){
+	mcpart thispart = evt_part->at(evt_tree->searchParticleMap(tree.getNodeIndex()));
+	std::vector<std::vector<double> > thistrack = _MCgetter.getTrajectoryPointsInTPC(&thispart,0);
+	if (thistrack.size() > 0)
+	  ShowerTraj.push_back(thistrack);
+      }//if charged particle
+      getAllShowerParticles(daughters.at(i), trackIDs, evt_part, evt_tree);
+    }
+    
+    return;
+  }
+
+  // reset tere
   void MakeShowers::ResetTree(){
 
-    _showerDaughters = -1;
-    _showerE = -1;
-    _showerPDG = -1;
-    _showerStartX = 0;
-    _showerStartY = 0;
-    _showerStartZ = 0;
-    ShowerTraj.clear();
-    _inTPC = -1;
+    if (_showertree){
+
+      _inTPC = -1;
+      _showerStartX = -1;
+      _showerStartY = -1;
+      _showerStartZ = -1;
+      _showerE = -1;
+      ShowerTraj.clear();
+      _showerPDG = -1;
+      Process = "";
+
+    }
 
     return;
   }

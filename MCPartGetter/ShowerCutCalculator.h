@@ -47,9 +47,19 @@ class ShowerCutCalculator{
   void getNearestMuonParams(std::vector<double> *shrStart,
 			    std::vector<double> *shrDir,
 			    std::vector<std::vector<std::vector<double> > > *muonTracks,
+			    std::vector<int> *muonIDs,
+			    int ancestorID,
 			    double &Dist,
 			    double &IP,
 			    double &DistToIP);
+
+  void getAncestorMuonParams(std::vector<double> *shrStart,
+			     std::vector<double> *shrDir,
+			     std::vector<std::vector<double> > *muonTrack,
+			     double &Dist,
+			     double &IP,
+			     double &DistToIP);
+
 
   void getDistanceToWall(std::vector<double> shrStart,
 			 std::vector<double> shrDir,

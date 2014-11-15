@@ -77,6 +77,7 @@ namespace larlite {
 
     /// All muons tracks
     std::vector<std::vector<std::vector<double> > > _allTracks;
+    std::vector<int> _allTrackIDs;
     
 
 

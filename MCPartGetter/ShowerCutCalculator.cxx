@@ -21,6 +21,14 @@ void ShowerCutCalculator::SetAlgoProperties(){
   _DistToBoxWall.SetXYZMax( 2*(::larutil::Geometry::GetME()->DetHalfWidth()),
 			    ::larutil::Geometry::GetME()->DetHalfHeight(),
 			    ::larutil::Geometry::GetME()->DetLength());
+
+  _inVol.SetVolume(0,256.35,-116.5,116.5,0,1036.8) ;
+  
+}
+
+bool ShowerCutCalculator::isInVolume(std::vector<double> point){
+  
+  return _inVol.PointInVolume(point);
   
 }
 

@@ -63,9 +63,6 @@ namespace larlite {
 
     protected:
 
-    /// Process to be searched
-    std::vector<std::pair<int,std::string> > _process;
-
     /// verbose
     bool _verbose;
 
@@ -86,30 +83,72 @@ namespace larlite {
     //Cut Distance
     double _cutDist;
 
-    /// Tree for analysis
-    TTree* _tree;
-    //variables for analysis
-    int    _isPrimary;       ///< 1 = is Primary. 0 = not.
-    double _E;               ///< shower energy
-    int    _inTPC;           ///< shower is in TPC
-    double _aE;              ///< Energy of ancestor
-    int    _aPdg;            ///< PDG of ancestor
-    double _mE;              ///< Energy of mother
-    int    _mPdg;            ///< PDG of mother
-    double _xStart;          ///< shower start point x
-    double _yStart;          ///< shower start point y
-    double _zStart;          ///< shower start point z
-    double _px;              ///< shower initial Px
-    double _py;              ///< shower initial Py
-    double _pz;              ///< shower initial Pz
-    double _tStart;          ///< shower start time
-    std::string proc;        ///< shower process
-    int _pdg;                ///< PDG code of shower
-    double _muDist;          ///< Distance to closest muon
-    double _muIP;            ///< Impact Param to closest muon
-    double _distToIP;        ///< Start to IP on track distance
-    double _forwardToWall;   ///< shower forward distance to TPC wall
-    double _backToWall;      ///< shower backwards distance to TPC wall
+
+	TTree * _ana_tree ;
+		
+	int _run ;
+	int _subrun ;
+	int _event ;
+
+	std::string _process ;
+	int _PDG ;
+	int _trackID ;
+
+	double _X ;
+	double _Y ;
+	double _Z ;
+	double _T ;
+
+	double _Px ;
+	double _Py ;
+	double _Pz ;
+	double _E ;
+
+	int _inActiveVolume ;
+
+	double _distAlongTraj ;
+	double _distBackAlongTraj ;
+
+	double _minMuDist;
+	double _minMuIP;
+	double _distToIP;
+
+	double _minMuDistExceptAncestor;
+	double _minMuIPExceptAncestor;
+	double _distToIPExceptAncestor;
+
+	double _ancDist;
+	double _ancIP;
+	double _ancToIP;
+
+	//Save info about parent as well
+	int _parentPDG ;
+	double _parentX ;
+	double _parentY ;
+	double _parentZ ;
+	double _parentT ;
+
+    double _parentPx;
+	double _parentPy;
+	double _parentPz ; 
+	double _parentE ; 
+
+	int _parentInActiveVolume ;
+
+
+	//Save info about ancestor as well
+	int _ancestorPDG ;
+	double _ancestorX ;
+	double _ancestorY ;
+	double _ancestorZ ;
+	double _ancestorT ;
+
+    double _ancestorPx;
+	double _ancestorPy;
+	double _ancestorPz ; 
+	double _ancestorE ; 
+
+	int _ancestorInActiveVolume ;
 
     std::vector<std::vector<double> > MuonTraj;
 

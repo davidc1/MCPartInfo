@@ -23,6 +23,7 @@
 #include "BasicTool/GeoAlgo/TwoLineIntersection.h"
 #include "BasicTool/GeoAlgo/SegmentPoCA.h"
 #include "BasicTool/GeoAlgo/DistToBoxWall.h"
+#include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
 
 /**
    \class ShowerCutCalculator
@@ -40,6 +41,8 @@ class ShowerCutCalculator{
   virtual ~ShowerCutCalculator(){};
 
   void SetAlgoProperties();
+
+  bool isInVolume(std::vector<double> point);
 
   void getNearestMuonParams(std::vector<double> *shrStart,
 			    std::vector<double> *shrDir,
@@ -66,6 +69,8 @@ class ShowerCutCalculator{
   geoalgo::TwoLineIntersection _lineIntersection;
   /// GeoAlg for PoCA cut
   geoalgo::SegmentPoCA _PoCA;
+  /// GeoAlg for InVolume
+  geoalgo::TrajectoryInVolume _inVol ;  
   
 
 };

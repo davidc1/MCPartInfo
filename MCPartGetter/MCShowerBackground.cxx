@@ -32,50 +32,44 @@ namespace larlite {
     // get MCTracks
     auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
 
-    //    std::cout << "number of showers: " << evt_mcshower->size() << std::endl;
-    //    std::cout << "number of tracks: " << evt_mctracks->size() << std::endl;
-
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
     // make a vector of all tracks. Do this only once
     _allTracks.clear();
-    //clock_t j;
-    //j = clock();
     for (size_t m=0; m < evt_mctracks->size(); m++)
       totMuonLen += addTrack(evt_mctracks->at(m));
-    //j = clock() - j;
-    //std::cout << "get muon tracks: " << 1000*((float)j)/CLOCKS_PER_SEC << " ms" << std::endl;
     _hMuonTotLen->Fill(totMuonLen/100.);
-    std::cout << "Total length for muons in event: " << totMuonLen/100. << std::endl;
-    std::cout << "number of tracks: " << _allTracks.size() << std::endl;
     // now loop over all showers
-
-    //clock_t u;
-    //u = clock();
 
     for (size_t s=0; s < evt_mcshower->size(); s++){
 
       //get current shower
       mcshower shr = evt_mcshower->at(s);
 
+
+      _run = evt_mctracks->run() ;
+      _subrun = evt_mctracks->subrun();
+      _event = evt_mctracks->event_id(); 
+
+
       // Now get particle track
       // Trajectory consisting only of start & end points
-      _inTPC = 1;
+      _inActiveVolume = 1;
       if ( shr.DetProfile().X() == 0 )
-	_inTPC = 0;
+	_inActiveVolume = 0;
       else{
 
-
-	_inTPC = 1;
-	_xStart = shr.DetProfile().X();
-	_yStart = shr.DetProfile().Y();
-	_zStart = shr.DetProfile().Z();
-	std::vector<double> shrStart = {_xStart, _yStart, _zStart};
-	_px = shr.DetProfile().Px();
-	_py = shr.DetProfile().Py();
-	_pz = shr.DetProfile().Pz();
-	double shrMom = sqrt(_px*_px+_py*_py+_pz*_pz);
-	std::vector<double> shrDir = {_px/shrMom,_py/shrMom,_pz/shrMom};
+	_trackID = shr.TrackID();
+	_inActiveVolume = 1;
+	_X = shr.DetProfile().X();
+	_Y = shr.DetProfile().Y();
+	_Z = shr.DetProfile().Z();
+	std::vector<double> shrStart = {_X, _Y, _Z};
+	_Px = shr.DetProfile().Px();
+	_Py = shr.DetProfile().Py();
+	_Pz = shr.DetProfile().Pz();
+	double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
+	std::vector<double> shrDir = {_Px/shrMom,_Py/shrMom,_Pz/shrMom};
 	std::vector<double> partOrigin = { shrStart.at(0)-shrDir.at(0)*300,
 					   shrStart.at(1)-shrDir.at(1)*300,
 					   shrStart.at(2)-shrDir.at(2)*300 };
@@ -83,30 +77,57 @@ namespace larlite {
 					shrStart.at(1)+shrDir.at(1)*10,
 					shrStart.at(2)+shrDir.at(2)*10 };
 
-	_tStart = shr.DetProfile().T();
+	_T      = shr.DetProfile().T();
 	_E      = shr.Start().E();
-	//proc    = shr.Process();
-	_pdg    = shr.PdgCode();
+	_process    = shr.Process();
+	_PDG    = shr.PdgCode();
+
+	// get mother information
+	_parentPDG = shr.MotherPdgCode();
+	_parentX = shr.MotherStart().X();
+	_parentY = shr.MotherStart().Y();
+	_parentZ = shr.MotherStart().Z();
+	_parentT = shr.MotherStart().T();
+	_parentPx = shr.MotherStart().Px();
+	_parentPy = shr.MotherStart().Py();
+	_parentPz = shr.MotherStart().Pz();
+	_parentE = shr.MotherStart().E();
+	std::vector<double> pVtx = { _parentX, _parentY, _parentZ } ; 
+	if(_cutParamCalculator.isInVolume(pVtx))
+	  _parentInActiveVolume = 1; 
+	else
+	  _parentInActiveVolume = 0;
+	
+	
+
+	// get ancestory information
+	_ancestorPDG = shr.AncestorPdgCode();
+	_ancestorX = shr.AncestorStart().X();
+	_ancestorY = shr.AncestorStart().Y();
+	_ancestorZ = shr.AncestorStart().Z();
+	_ancestorT = shr.AncestorStart().T();
+	_ancestorPx = shr.AncestorStart().Px();
+	_ancestorPy = shr.AncestorStart().Py();
+	_ancestorPz = shr.AncestorStart().Pz();
+	_ancestorE = shr.AncestorStart().E();
+	std::vector<double> aVtx = { _ancestorX, _ancestorY, _ancestorZ } ; 
+	if(_cutParamCalculator.isInVolume(aVtx))
+	  _ancestorInActiveVolume = 1;  
+	else
+	  _ancestorInActiveVolume = 0;
+
 
 	
 	// get results from algorithms
-	//	t = clock();
-	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, _muDist, _muIP, _distToIP);
-	//	t = clock() - t;
-	//	std::cout << "Nearest Muon: " << 1000*((float)t)/CLOCKS_PER_SEC << " ms" << std::endl;
-	//	clock_t k;
-	//	k = clock();
-	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _forwardToWall, _backToWall);
-	//	k = clock() - k;
-	//	std::cout << "Wall Dist: " << 1000*((float)k)/CLOCKS_PER_SEC << " ms" << std::endl;
+	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, _minMuDist, _minMuIP, _distToIP);
+	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
 
       }
       // Now Fill Tree!
-      _tree->Fill();
+      _ana_tree->Fill();
       
     }//for all particles
-    //u = clock() - u;
-    //std::cout << "Tot to analyze this shower (inTPC): " << 1000*((float)u)/CLOCKS_PER_SEC << " ms" << std::endl;
+
     _evtN += 1;
     
     return true;
@@ -114,7 +135,7 @@ namespace larlite {
   
   bool MCShowerBackground::finalize() {
 
-    _tree->Write();
+    _ana_tree->Write();
     _hMuonTotLen->Write();
 
     return true;
@@ -146,59 +167,151 @@ namespace larlite {
 
   void MCShowerBackground::prepareTree(){
 
-    if (_tree) delete _tree;
-    _tree = new TTree("ana_tree","");
-    _tree->Branch("_isPrimary",&_isPrimary,"isPrimary/I");
-    _tree->Branch("_E",&_E,"Energy/D");
-    _tree->Branch("_inTPC",&_inTPC,"inTPC/I");
-    _tree->Branch("_xStart",&_xStart,"xStart/D"); 
-    _tree->Branch("_yStart",&_yStart,"yStart/D"); 
-    _tree->Branch("_zStart",&_zStart,"zStart/D"); 
-    _tree->Branch("_px",&_px,"Showerpx/D"); 
-    _tree->Branch("_py",&_py,"Showerpy/D"); 
-    _tree->Branch("_pz",&_pz,"Showerpz/D"); 
-    _tree->Branch("_tStart",&_tStart,"tStart/D");
-    _tree->Branch("_pdg",&_pdg,"PDG/I");
-    //_tree->Branch("proc",&proc);
-    _tree->Branch("_mPdg",&_mPdg,"MotherPDG/I");
-    _tree->Branch("_mE",&_mE,"mE/D");
-    _tree->Branch("_aPdg",&_aPdg,"AncestorPDG/I");
-    _tree->Branch("_aE",&_aE,"AncestorE/D");
-    _tree->Branch("_muDist",&_muDist,"DistanceToClosestMuon/D");
-    _tree->Branch("_muIP",&_muIP,"ImpactParamToClosestMuon/D");
-    _tree->Branch("_forwardToWall",&_forwardToWall,"FowardDistToWall/D");
-    _tree->Branch("_backToWall",&_backToWall,"BackwardsDistToWall/D");
-    
+
+    if(!_ana_tree) {
+      _ana_tree = new TTree("ana_tree","");
+      
+	  _ana_tree->Branch("_run",&_run,"run/I");
+	  _ana_tree->Branch("_subrun",&_subrun,"subrun/I");
+	  _ana_tree->Branch("_event",&_event,"event/I");
+
+	  _ana_tree->Branch("_process","std::string",&_process);
+	  _ana_tree->Branch("_PDG",&_PDG,"PDG/I");
+	  _ana_tree->Branch("_trackID",&_trackID,"trackID/I");
+
+	  _ana_tree->Branch("_X",&_X,"X/D");
+	  _ana_tree->Branch("_Y",&_Y,"Y/D");
+	  _ana_tree->Branch("_Z",&_Z,"Z/D");
+	  _ana_tree->Branch("_T",&_T,"T/D");
+
+	  _ana_tree->Branch("_Px",&_Px,"Px/D");
+	  _ana_tree->Branch("_Py",&_Py,"Py/D");
+	  _ana_tree->Branch("_Pz",&_Pz,"Pz/D");
+	  _ana_tree->Branch("_E",&_E,"E/D");
+
+	  _ana_tree->Branch("_inActiveVolume",&_inActiveVolume,"inActiveVolume/I");
+	  
+	  _ana_tree->Branch("_distAlongTraj",&_distAlongTraj,"distAlongTraj/D") ;
+	  _ana_tree->Branch("_distBackAlongTraj",&_distBackAlongTraj,"distBackAlongTraj/D") ;
+
+	  _ana_tree->Branch("_minMuDist",&_minMuDist,"minMuDist/D");
+	  _ana_tree->Branch("_minMuIP",&_minMuIP,"minMuIP/D");
+	  _ana_tree->Branch("_distToIP",&_distToIP,"distToIP/D");
+
+	  _ana_tree->Branch("_minMuDistExceptAncestor",&_minMuDistExceptAncestor,"minMuDistExceptAncestor/D");
+	  _ana_tree->Branch("_minMuIPExceptAncestor",&_minMuIPExceptAncestor,"minMuIPExceptAncestor/D");
+	  _ana_tree->Branch("_distToIPExceptAncestor",&_distToIPExceptAncestor,"distToIPExceptAncestor/D");
+
+
+	  ////ANCESTOR INFO
+	  //
+	  _ana_tree->Branch("_parentPDG",&_parentPDG,"parentPDG/I");
+	  _ana_tree->Branch("_parentX",&_parentX,"parentX/D");
+	  _ana_tree->Branch("_parentY",&_parentY,"parentY/D");
+	  _ana_tree->Branch("_parentZ",&_parentZ,"parentZ/D");
+	  _ana_tree->Branch("_parentT",&_parentT,"parentT/D");
+
+	  _ana_tree->Branch("_parentPx",&_parentPx,"parentPx/D");
+	  _ana_tree->Branch("_parentPy",&_parentPy,"parentPy/D");
+	  _ana_tree->Branch("_parentPz",&_parentPz,"parentPz/D");
+	  _ana_tree->Branch("_parentE",&_parentE,"parentE/D");
+
+	  _ana_tree->Branch("_parentInActiveVolume",&_parentInActiveVolume,"parentInActiveVolume/I");
+
+	  _ana_tree->Branch("_ancDist",&_ancDist,"ancDist/D");
+	  _ana_tree->Branch("_ancIP",&_ancIP,"ancIP/D");
+	  _ana_tree->Branch("_ancToIP",&_ancToIP,"ancToIP/D");
+
+
+
+	  ////PARENT INFO
+	  //
+	  _ana_tree->Branch("_ancestorPDG",&_ancestorPDG,"ancestorPDG/I");
+	  _ana_tree->Branch("_ancestorX",&_ancestorX,"ancestorX/D");
+	  _ana_tree->Branch("_ancestorY",&_ancestorY,"ancestorY/D");
+	  _ana_tree->Branch("_ancestorZ",&_ancestorZ,"ancestorZ/D");
+	  _ana_tree->Branch("_ancestorT",&_ancestorT,"ancestorT/D");
+
+	  _ana_tree->Branch("_ancestorPx",&_ancestorPx,"ancestorPx/D");
+	  _ana_tree->Branch("_ancestorPy",&_ancestorPy,"ancestorPy/D");
+	  _ana_tree->Branch("_ancestorPz",&_ancestorPz,"ancestorPz/D");
+	  _ana_tree->Branch("_ancestorE",&_ancestorE,"ancestorE/D");
+
+	  _ana_tree->Branch("_ancestorInActiveVolume",&_ancestorInActiveVolume,"ancestorInActiveVolume/I");
+
+
+//	  _ana_tree->Branch("MuonTraj",&MuonTraj) ;
+	
+	}
   }
 
 
     
   
   void MCShowerBackground::resetTree(){
-    
-    if (_tree){
-      
-      _isPrimary = 0;
-      _E         = -1;
-      _inTPC     = -1;
-      _xStart    = -1;
-      _yStart    = -1;
-      _zStart    = -1;
-      _tStart    = -1;
-      _px        = -1;
-      _py        = -1;
-      _pz        = -1;
-      proc       = "";
-      _mPdg      = 0;
-      _mE        = -1;
-      _aPdg      = -1;
-      _aE        = -1;
-      _muDist    = -1;
-      _muIP      = -1;
-      _distToIP  = -1;
-      _forwardToWall = -1;
-      _backToWall    = -1;
-    }      
+
+   _run     = -1;
+   _subrun  = -1;
+   _event 	= -1;
+
+   _process = "NONE";
+   _PDG  	= -1;
+   _trackID = -1;
+
+   _X  		= -9999999;
+   _Y 		= -9999999;
+   _Z 		= -9999999;
+   _T 		= -9999999;
+
+   _Px 		= -9999999;
+   _Py 		= -9999999;
+   _Pz 		= -9999999;
+   _E 		= -9999999;
+
+   _distAlongTraj     = -9999999;
+   _distBackAlongTraj = -9999999;
+
+   _minMuDist = -1;
+   _minMuIP = -1;
+   _distToIP = -1;
+
+   _minMuDistExceptAncestor = -1;
+   _minMuIPExceptAncestor = -1;
+   _distToIPExceptAncestor = -1;
+
+   _ancDist = -1;
+   _ancIP = -1;
+   _ancToIP = -1;
+
+   //parent
+   _parentPDG = -1;
+   _parentX   = -9999999;
+   _parentY   = -9999999;
+   _parentZ   = -9999999;
+   _parentT   = -9999999;
+
+   _parentPx  = -9999999;
+   _parentPy  = -9999999;
+   _parentPz  = -9999999;
+   _parentE   = -9999999;
+
+
+   //ancestor
+   _ancestorPDG = -1;
+   _ancestorX   = -9999999;
+   _ancestorY   = -9999999;
+   _ancestorZ   = -9999999;
+   _ancestorT   = -9999999;
+
+   _ancestorPx  = -9999999;
+   _ancestorPy  = -9999999;
+   _ancestorPz  = -9999999;
+   _ancestorE   = -9999999;
+
+
+   _inActiveVolume = -99 ;
+   _parentInActiveVolume = -99 ;
+   _ancestorInActiveVolume = -99 ;
   }
 
 }

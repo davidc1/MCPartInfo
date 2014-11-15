@@ -11,10 +11,12 @@
 #include "TreeNode.h"
 #include "TreeTop.h"
 #include "ComptonBackground.h"
+#include "MCShowerBackground.h"
 #include "CountEvents.h"
 #include "CosmicTracks.h"
 #include "MakeShowers.h"
 #include "MakeMCTree.h"
+#include "ShowerCutCalculator.h"
 //ADD_NEW_HEADER ... do not change this comment line
 
 // Class forward declaration here
@@ -23,6 +25,7 @@ namespace larlite {
   class MCgetter;
   class MCPartExample;
   class ComptonBackground;
+  class MCShowerBackground;
   class CountEvents;
   class CosmicTracks;
   class MakeShowers;
@@ -34,6 +37,8 @@ namespace larlite {
 
 class TreeNode;
 class TreeTop;
+  class ShowerCutCalculator;
 //ADD_EMPTY_CLASS ... do not change this comment line
 #endif
+
 

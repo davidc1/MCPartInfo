@@ -14,11 +14,14 @@
 #pragma link C++ class TreeNode+;
 #pragma link C++ class TreeTop+;
 #pragma link C++ class larlite::ComptonBackground+;
+#pragma link C++ class larlite::MCShowerBackground+;
 #pragma link C++ class larlite::CountEvents+;
 #pragma link C++ class larlite::CosmicTracks+;
 #pragma link C++ class larlite::MakeShowers+;
 #pragma link C++ class larlite::MakeMCTree+;
+#pragma link C++ class ShowerCutCalculator+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+
 

@@ -41,7 +41,7 @@ lineRed = Line2D([],[],color='red',linewidth=5)
 lineBlack = Line2D([],[],color='black',linewidth=5)
 
 
-f = ROOT.TFile("makeshowers.root")
+f = ROOT.TFile("showers10.root")
 
 m = f.Get("shower_tree")
 

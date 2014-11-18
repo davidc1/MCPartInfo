@@ -9,7 +9,7 @@
  */
 
 /** \addtogroup MCPartGetter
-
+    David Caratelli
     @{*/
 #ifndef LARLITE_PI0ROOPDF_H
 #define LARLITE_PI0ROOPDF_H
@@ -57,6 +57,8 @@ class Pi0RooPDF: public RooGenericPdf {
   RooRealVar _x;
   
   RooRealVar _lambda;
+
+  ClassDef(Pi0RooPDF,1)
 
 };
 

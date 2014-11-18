@@ -22,7 +22,7 @@ from ROOT import larlite as fmwk
 my_proc=fmwk.ana_processor()
 
 # Specify IO mode
-my_proc.set_io_mode(fmwk.storage_manager.kREAD)
+my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 #my_proc.set_io_mode(storage_manager.WRITE)
 #my_proc.set_io_mode(storage_manager.BOTH)
 
@@ -42,28 +42,17 @@ for x in xrange(len(sys.argv)-1):
 
 # Set output root file: this is a separate root file in which your
 # analysis module can store anything such as histograms, your own TTree, etc.
-my_proc.set_ana_output_file("shrBackground.root")
+my_proc.set_output_file("DavidTracks.root")
+
+my_proc.set_data_to_write(fmwk.data.kMCTrack,"davidc1")
 
 # Create analysis class instance. For this example, ana_base.
 # To show how one can run multiple analysis modules at once,
 # we make multiple ana_base instance.
 
-shrBackground = fmwk.MCShowerBackground()
+maketracks = fmwk.MakeMyTracks()
 
-my_proc.add_process(shrBackground)
+my_proc.add_process(maketracks)
 
-# Let's run it.
-#t0 = int(round(time.time()*1000))
-#numEvts = 18
 my_proc.run()
-#t1 = int(round(time.time()*1000))
-#dt = (t1-t0)/1000. #seconds
-#print "time diff is {0} sec.".format(dt)
-#print "time per event is: {0} seconds".format(dt/numEvts)
-'''
-while my_proc.process_event():
-    usrinput = raw_input("Hit Enter: next evt  ||  q: exit viewer\n")
-    if ( usrinput == "q" ):
-        break
-'''
 # done!

@@ -144,14 +144,16 @@ namespace larlite {
 	double _ancestorZ ;
 	double _ancestorT ;
 
-    double _ancestorPx;
+	double _ancestorPx;
 	double _ancestorPy;
 	double _ancestorPz ; 
 	double _ancestorE ; 
 
 	int _ancestorInActiveVolume ;
 
-    std::vector<std::vector<double> > MuonTraj;
+	std::vector<std::vector<double> > ShowerTraj;
+	std::vector<std::vector<double> > MotherTraj;
+	std::vector<std::vector<double> > AncestorTraj;
 
     //histogram for muon track length
     TH1D *_hMuonTotLen;

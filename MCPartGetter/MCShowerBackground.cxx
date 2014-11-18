@@ -66,9 +66,13 @@ namespace larlite {
 	_Y = shr.DetProfile().Y();
 	_Z = shr.DetProfile().Z();
 	std::vector<double> shrStart = {_X, _Y, _Z};
-	_Px = shr.DetProfile().Px();
-	_Py = shr.DetProfile().Py();
-	_Pz = shr.DetProfile().Pz();
+	//	_Px = shr.DetProfile().Px();
+	//	_Py = shr.DetProfile().Py();
+	//	_Pz = shr.DetProfile().Pz();
+	_Px = shr.Start().Px();
+	_Py = shr.Start().Py();
+	_Pz = shr.Start().Pz();
+
 	double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
 	std::vector<double> shrDir = {_Px/shrMom,_Py/shrMom,_Pz/shrMom};
 	std::vector<double> shrOrigin = { shrStart.at(0)-shrDir.at(0)*300,
@@ -78,21 +82,37 @@ namespace larlite {
 				       shrStart.at(1)+shrDir.at(1)*10,
 				       shrStart.at(2)+shrDir.at(2)*10 };
 
-	_T      = shr.DetProfile().T();
-	_E      = shr.Start().E();
+	_T          = shr.DetProfile().T();
+	_E          = shr.Start().E();
 	_process    = shr.Process();
-	_PDG    = shr.PdgCode();
+	_PDG        = shr.PdgCode();
 
 	// get mother information
-	_parentPDG = shr.MotherPdgCode();
-	_parentX = shr.MotherStart().X();
-	_parentY = shr.MotherStart().Y();
-	_parentZ = shr.MotherStart().Z();
-	_parentT = shr.MotherStart().T();
-	_parentPx = shr.MotherStart().Px();
-	_parentPy = shr.MotherStart().Py();
-	_parentPz = shr.MotherStart().Pz();
-	_parentE = shr.MotherStart().E();
+	// if shower starts with photon -> mother is the photon
+	if (_PDG == 22){
+	  _parentPDG = shr.PdgCode();
+	  _parentX   = shr.Start().X();
+	  _parentY   = shr.Start().Y();
+	  _parentZ   = shr.Start().Z();
+	  _parentT   = shr.Start().T();
+	  _parentPx  = shr.Start().Px();
+	  _parentPy  = shr.Start().Py();
+	  _parentPz  = shr.Start().Pz();
+	  _parentE   = shr.Start().E();
+	}	  
+	// otherwise -> electron/positron's mother is the "mother"
+	else{
+	  _parentPDG = shr.MotherPdgCode();
+	  _parentX = shr.MotherStart().X();
+	  _parentY = shr.MotherStart().Y();
+	  _parentZ = shr.MotherStart().Z();
+	  _parentT = shr.MotherStart().T();
+	  _parentPx = shr.MotherStart().Px();
+	  _parentPy = shr.MotherStart().Py();
+	  _parentPz = shr.MotherStart().Pz();
+	  _parentE = shr.MotherStart().E();
+	}
+
 	std::vector<double> pVtx = { _parentX, _parentY, _parentZ } ; 
 	if(_cutParamCalculator.isInVolume(pVtx))
 	  _parentInActiveVolume = 1; 
@@ -103,19 +123,16 @@ namespace larlite {
 
 	// get ancestor information
 	_ancestorPDG = shr.AncestorPdgCode();
-	_ancestorX = shr.AncestorStart().X();
-	_ancestorY = shr.AncestorStart().Y();
-	_ancestorZ = shr.AncestorStart().Z();
-	_ancestorT = shr.AncestorStart().T();
-	_ancestorPx = shr.AncestorStart().Px();
-	_ancestorPy = shr.AncestorStart().Py();
-	_ancestorPz = shr.AncestorStart().Pz();
-	_ancestorE = shr.AncestorStart().E();
-	std::vector<double> aVtx = { _ancestorX, _ancestorY, _ancestorZ } ; 
-	if(_cutParamCalculator.isInVolume(aVtx))
-	  _ancestorInActiveVolume = 1;  
-	else
-	  _ancestorInActiveVolume = 0;
+	_ancestorX   = shr.AncestorStart().X();
+	_ancestorY   = shr.AncestorStart().Y();
+	_ancestorZ   = shr.AncestorStart().Z();
+	_ancestorT   = shr.AncestorStart().T();
+	_ancestorPx  = shr.AncestorStart().Px();
+	_ancestorPy  = shr.AncestorStart().Py();
+	_ancestorPz  = shr.AncestorStart().Pz();
+	_ancestorE   = shr.AncestorStart().E();
+
+	_ancestorInActiveVolume = 0;
 	
 	//if ancestor is pi+/pi-/mu+/mu-/proton/e+/e- then find distance to track
 	if ( (abs(_ancestorPDG) == 11) or (abs(_ancestorPDG) == 13) or
@@ -126,11 +143,22 @@ namespace larlite {
 	    if (evt_mctracks->at(m).TrackID() == shr.AncestorTrackID()){
 
 	      //get trajectory points
-	      std::vector<std::vector<double> >  track;
-	      for (size_t i=0; i < evt_mctracks->at(m).size(); i++)
-		track.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
-	      if (track.size() > 1){
-		_cutParamCalculator.getAncestorMuonParams(&shrStart, &shrDir, &track, _ancDist, _ancIP, _ancToIP);
+	      std::vector<std::vector<std::vector<double> > > tracks;
+	      tracks.clear();
+	      std::vector<std::vector<double> > thistrack;
+	      std::vector<int> ID;
+	      ID.clear();
+	      AncestorTraj.clear();
+	      for (size_t i=0; i < evt_mctracks->at(m).size(); i++){
+		thistrack.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
+		AncestorTraj.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
+	      }
+	      if (thistrack.size() > 1){
+		// then the ancestor is a track that leaves charge in the detector
+		_ancestorInActiveVolume = 1;
+		tracks.push_back(thistrack);
+		ID.push_back(evt_mctracks->at(m).TrackID());
+		_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &tracks, &ID, 0, _ancDist, _ancIP, _ancToIP);
 	      }//if track > 1 in length
 	    }//if ancestor mctrack is found
 	}//for correct PDGs
@@ -254,7 +282,10 @@ namespace larlite {
       _ana_tree->Branch("_ancestorE",&_ancestorE,"ancestorE/D");//---------G4 start E of ancestor
       
       _ana_tree->Branch("_ancestorInActiveVolume",&_ancestorInActiveVolume,"ancestorInActiveVolume/I");//---{_ancX,_ancY,_ancZ} in TPC
-      
+
+      _ana_tree->Branch("ShowerTraj",&ShowerTraj);
+      _ana_tree->Branch("MotherTraj",&MotherTraj);
+      _ana_tree->Branch("AncestorTraj",&AncestorTraj);
       
     }
   }
@@ -326,6 +357,11 @@ namespace larlite {
    _inActiveVolume = -99 ;
    _parentInActiveVolume = -99 ;
    _ancestorInActiveVolume = -99 ;
+
+   ShowerTraj.clear();
+   MotherTraj.clear();
+   AncestorTraj.clear();
+
   }
 
 }

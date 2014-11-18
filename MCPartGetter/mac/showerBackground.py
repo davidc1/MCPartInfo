@@ -53,7 +53,7 @@ my_proc.add_process(shrBackground)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 10
+numEvts = 18
 my_proc.run(0,numEvts)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds

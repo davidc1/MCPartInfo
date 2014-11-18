@@ -58,7 +58,7 @@ namespace larlite {
     // Needs to be called from each primary (i.e. TreeTop)
     // because it digs into the tree structure and finds showers
     for (size_t i=0; i < evt_tree->size(); i++)
-      findMCShowers(evt_tree->at(i), evt_part, evt_tree, evt_mcshower, false);
+      findMCShowers(evt_tree->at(i), evt_part, evt_tree, evt_mcshower);
 
     _evtN += 1;
 
@@ -74,36 +74,33 @@ namespace larlite {
     return true;
   }
 
-  void MakeShowers::findMCShowers(treenode tree, event_mcpart *evt_part, event_mctree *evt_tree, event_mcshower *evt_mcshower, bool inshower){
+  void MakeShowers::findMCShowers(treenode tree, event_mcpart *evt_part, event_mctree *evt_tree, event_mcshower *evt_mcshower){
 
 
-    if (evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Process() == "eBrem")
-      std::cout << "eBrem!" << std::endl;
     // if this particle has PDG == 22 AND
     // if any of the daughters of a particle are PDG == 11 or -11
     // then this particle should make a shower
-    if ( ( (!inshower) and
-	   ( ( (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 11) or
-	       (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 22) ) ) ) 
-	 or
-	 ( (inshower) and
-	   (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 22)
-	   and 
-	   (evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Process() == "eBrem") ) )
+    if ( tree.getNodeIndex() == 129035 ){
+      std::cout << "found it! " << std::endl;
+      std::cout << "TrackID: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).TrackId() << std::endl;
+      std::cout << "PDG: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode() << std::endl;
+      std::cout << "Energy: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Trajectory().at(0).E() << std::endl;
+    }
+    if ( (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 11) or
+	 (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 22) )
       {
 	
-	if ((tree.getChildren().size() > 0) and (evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Trajectory().at(0).E() > _Ecut) ){
-	  inshower = true;
+	if ((evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Trajectory().at(0).E() > _Ecut) ){
 	  makeMCShower(tree, evt_part, evt_tree, evt_mcshower);
 	}
       } // if particle's PDG == 22 and above energy cut
     
     // otherwise...keep on looking
-    //    else{
-    std::vector<::treenode> children = tree.getChildren();
-    for (size_t i=0; i < children.size(); i++)
-      findMCShowers(children.at(i), evt_part, evt_tree, evt_mcshower, inshower);
-    //    }
+    else{
+      std::vector<::treenode> children = tree.getChildren();
+      for (size_t i=0; i < children.size(); i++)
+	findMCShowers(children.at(i), evt_part, evt_tree, evt_mcshower);
+    }
     
     return;
   }
@@ -150,7 +147,7 @@ namespace larlite {
       int totpoints = 0;
       for (size_t u=0; u < ShowerTraj.size(); u++)
 	totpoints += ShowerTraj.at(u).size();
-      std::cout << "Shower E: " << _showerE << "\tTrajectory Points: " << totpoints << std::endl;
+
       _showertree->Fill();
     }
     
@@ -177,7 +174,6 @@ namespace larlite {
       shr.AncestorStart(ancestor.Trajectory().at(0));
       shr.AncestorEnd(ancestor.Trajectory().back());
     }
-
     evt_mcshower->push_back(shr);
     
     return;

@@ -47,8 +47,7 @@ namespace larlite {
     void findMCShowers(treenode tree,
 		       event_mcpart *evt_part,
 		       event_mctree *evt_tree,
-		       event_mcshower *evt_mcshower,
-		       bool inshower);
+		       event_mcshower *evt_mcshower);
 
     void makeMCShower(treenode tree,
 		      event_mcpart *evt_part,

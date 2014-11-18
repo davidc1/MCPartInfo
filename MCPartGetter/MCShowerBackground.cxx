@@ -170,9 +170,11 @@ namespace larlite {
 						 _minMuDistExceptAncestor, _minMuIPExceptAncestor, _distToIPExceptAncestor);
 	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
 	
+
+	// Now Fill Tree!
+	// Fill only if inActiveVolume
+	_ana_tree->Fill();
       }
-      // Now Fill Tree!
-      _ana_tree->Fill();
     
     }//for all particles
     

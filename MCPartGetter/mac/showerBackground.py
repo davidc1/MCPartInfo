@@ -52,13 +52,13 @@ shrBackground = fmwk.MCShowerBackground()
 my_proc.add_process(shrBackground)
 
 # Let's run it.
-t0 = int(round(time.time()*1000))
-numEvts = 18
-my_proc.run(0,numEvts)
-t1 = int(round(time.time()*1000))
-dt = (t1-t0)/1000. #seconds
-print "time diff is {0} sec.".format(dt)
-print "time per event is: {0} seconds".format(dt/numEvts)
+#t0 = int(round(time.time()*1000))
+#numEvts = 18
+my_proc.run()
+#t1 = int(round(time.time()*1000))
+#dt = (t1-t0)/1000. #seconds
+#print "time diff is {0} sec.".format(dt)
+#print "time per event is: {0} seconds".format(dt/numEvts)
 '''
 while my_proc.process_event():
     usrinput = raw_input("Hit Enter: next evt  ||  q: exit viewer\n")

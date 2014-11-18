@@ -17,6 +17,7 @@
 #include "MakeShowers.h"
 #include "MakeMCTree.h"
 #include "ShowerCutCalculator.h"
+#include "Pi0RooPDF.h"
 //ADD_NEW_HEADER ... do not change this comment line
 
 // Class forward declaration here
@@ -38,7 +39,9 @@ namespace larlite {
 class TreeNode;
 class TreeTop;
   class ShowerCutCalculator;
+  class Pi0RooPDF;
 //ADD_EMPTY_CLASS ... do not change this comment line
 #endif
+
 
 

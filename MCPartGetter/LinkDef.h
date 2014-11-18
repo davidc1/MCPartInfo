@@ -20,8 +20,10 @@
 #pragma link C++ class larlite::MakeShowers+;
 #pragma link C++ class larlite::MakeMCTree+;
 #pragma link C++ class ShowerCutCalculator+;
+#pragma link C++ class Pi0RooPDF+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+
 
 

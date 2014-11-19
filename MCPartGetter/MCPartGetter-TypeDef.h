@@ -18,8 +18,10 @@
 #include "MakeMCTree.h"
 #include "ShowerCutCalculator.h"
 #include "Pi0RooPDF.h"
+#include "Pi0PdfMaker.h"
 #include "MakeMyTracks.h"
 #include "MakeMyShowers.h"
+#include "GetPi0Distributions.h"
 //ADD_NEW_HEADER ... do not change this comment line
 
 // Class forward declaration here
@@ -36,16 +38,19 @@ namespace larlite {
   class MakeMCTree;
   class MakeMyTracks;
   class MakeMyShowers;
+  class GetPi0Distributions;
 //ADD_ANA_CLASS ... do not change this comment line
 
 }
 
 class TreeNode;
 class TreeTop;
-  class ShowerCutCalculator;
-  class Pi0RooPDF;
+class ShowerCutCalculator;
+class Pi0RooPDF;
+class Pi0PdfMaker;
 //ADD_EMPTY_CLASS ... do not change this comment line
 #endif
+
 
 
 

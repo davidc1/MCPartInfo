@@ -20,6 +20,14 @@ namespace larlite {
     /// prepare total muon length histogram
     _hMuonTotLen = new TH1D("hMuonTotLen","Summed Length of All Muons in one Event; Sum length [meters]", 100, 0, 100);
 
+    // detector boundaries
+    _xmin = 0;
+    _xmax = ::larutil::Geometry::GetME()->DetHalfWidth()*2;
+    _ymin = -::larutil::Geometry::GetME()->DetHalfHeight();
+    _ymax = ::larutil::Geometry::GetME()->DetHalfHeight();
+    _zmin = 0;
+    _xmax = ::larutil::Geometry::GetME()->DetLength();
+
     return true;
   }
 
@@ -28,17 +36,23 @@ namespace larlite {
   bool MCShowerBackground::analyze(storage_manager* storage) {
     
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
+    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
+    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
     // make a vector of all tracks. Do this only once
     _allTracks.clear();
     _allTrackIDs.clear();
-    for (size_t m=0; m < evt_mctracks->size(); m++)
+    double frac=0;
+    for (size_t m=0; m < evt_mctracks->size(); m++){
+      //if ( (evt_mctracks->at(m).Start().T() < -1.6E6) or (evt_mctracks->at(m).Start().T() > 1.6E6) ){
+      frac += 1;
       totMuonLen += addTrack(evt_mctracks->at(m));
+      //}
+    }
+    std::cout << "Fraction: " << (frac/evt_mctracks->size()) << std::endl;
     _hMuonTotLen->Fill(totMuonLen/100.);
     // now loop over all showers
 
@@ -56,7 +70,9 @@ namespace larlite {
       // Now get particle track
       // Trajectory consisting only of start & end points
       _inActiveVolume = 1;
-      if ( shr.DetProfile().X() == 0 )
+      if ( (shr.DetProfile().X() > _xmin) and (shr.DetProfile().X() < _xmax) and
+	   (shr.DetProfile().Y() > _ymin) and (shr.DetProfile().Y() < _ymax) and
+	   (shr.DetProfile().Z() > _zmin) and (shr.DetProfile().Z() < _zmax) )
 	_inActiveVolume = 0;
       else{
 

@@ -21,11 +21,14 @@
 #pragma link C++ class larlite::MakeMCTree+;
 #pragma link C++ class ShowerCutCalculator+;
 #pragma link C++ class Pi0RooPDF+;
+#pragma link C++ class Pi0PdfMaker+;
 #pragma link C++ class larlite::MakeMyTracks+;
 #pragma link C++ class larlite::MakeMyShowers+;
+#pragma link C++ class larlite::GetPi0Distributions+;
 //ADD_NEW_CLASS ... do not change this line
 
 #endif
+
 
 
 

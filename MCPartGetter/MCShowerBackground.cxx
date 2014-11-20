@@ -38,9 +38,9 @@ namespace larlite {
     srand (time(NULL));
     
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
+    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
+    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -49,10 +49,10 @@ namespace larlite {
     _allTrackIDs.clear();
     double frac=0;
     for (size_t m=0; m < evt_mctracks->size(); m++){
-      //if ( (evt_mctracks->at(m).Start().T() < -1.6E6) or (evt_mctracks->at(m).Start().T() > 1.6E6) ){
+      if ( (evt_mctracks->at(m).Start().T() > -0.8E6) and (evt_mctracks->at(m).Start().T() < 0.8E6) ){
       frac += 1;
       totMuonLen += addTrack(evt_mctracks->at(m));
-      //}
+      }
     }
     _hMuonTotLen->Fill(totMuonLen/100.);
     // now loop over all showers
@@ -81,19 +81,20 @@ namespace larlite {
 
 	_trackID = shr.TrackID();
 	_inActiveVolume = 1;
+	/*
 	_X = rand() % 256;
 	_Y = rand() % 116;
 	_Z = rand() % 1036;
-	/*
+	*/
 	_X = shr.DetProfile().X();
 	_Y = shr.DetProfile().Y();
 	_Z = shr.DetProfile().Z();
-	*/
+
 	std::vector<double> shrStart = {_X, _Y, _Z};
 	//	_Px = shr.DetProfile().Px();
 	//	_Py = shr.DetProfile().Py();
 	//	_Pz = shr.DetProfile().Pz();
-	_Px = 0.;//shr.Start().Px();
+	_Px = shr.Start().Px();
 	_Py = shr.Start().Py();
 	_Pz = shr.Start().Pz();
 

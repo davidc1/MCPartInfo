@@ -26,7 +26,7 @@ namespace larlite {
     _ymin = -::larutil::Geometry::GetME()->DetHalfHeight();
     _ymax = ::larutil::Geometry::GetME()->DetHalfHeight();
     _zmin = 0;
-    _xmax = ::larutil::Geometry::GetME()->DetLength();
+    _zmax = ::larutil::Geometry::GetME()->DetLength();
 
     return true;
   }
@@ -34,11 +34,13 @@ namespace larlite {
 
   
   bool MCShowerBackground::analyze(storage_manager* storage) {
+
+    srand (time(NULL));
     
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
+    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
+    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -52,7 +54,6 @@ namespace larlite {
       totMuonLen += addTrack(evt_mctracks->at(m));
       //}
     }
-    std::cout << "Fraction: " << (frac/evt_mctracks->size()) << std::endl;
     _hMuonTotLen->Fill(totMuonLen/100.);
     // now loop over all showers
 
@@ -69,23 +70,30 @@ namespace larlite {
 
       // Now get particle track
       // Trajectory consisting only of start & end points
-      _inActiveVolume = 1;
+      /*
       if ( (shr.DetProfile().X() > _xmin) and (shr.DetProfile().X() < _xmax) and
 	   (shr.DetProfile().Y() > _ymin) and (shr.DetProfile().Y() < _ymax) and
 	   (shr.DetProfile().Z() > _zmin) and (shr.DetProfile().Z() < _zmax) )
+      */
+      if (shr.DetProfile().X() == 0)
 	_inActiveVolume = 0;
       else{
 
 	_trackID = shr.TrackID();
 	_inActiveVolume = 1;
+	_X = rand() % 256;
+	_Y = rand() % 116;
+	_Z = rand() % 1036;
+	/*
 	_X = shr.DetProfile().X();
 	_Y = shr.DetProfile().Y();
 	_Z = shr.DetProfile().Z();
+	*/
 	std::vector<double> shrStart = {_X, _Y, _Z};
 	//	_Px = shr.DetProfile().Px();
 	//	_Py = shr.DetProfile().Py();
 	//	_Pz = shr.DetProfile().Pz();
-	_Px = shr.Start().Px();
+	_Px = 0.;//shr.Start().Px();
 	_Py = shr.Start().Py();
 	_Pz = shr.Start().Pz();
 

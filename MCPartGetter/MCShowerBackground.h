@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <time.h>
+#include <stdlib.h>
 
 namespace larlite {
   /**

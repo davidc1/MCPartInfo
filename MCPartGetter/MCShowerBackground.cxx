@@ -18,15 +18,9 @@ namespace larlite {
     _cutParamCalculator.SetAlgoProperties();
 
     /// prepare total muon length histogram
-    _hMuonTotLen = new TH1D("hMuonTotLen","Summed Length of All Muons in one Event; Sum length [meters]", 100, 0, 100);
-
-    // detector boundaries
-    _xmin = 0;
-    _xmax = ::larutil::Geometry::GetME()->DetHalfWidth()*2;
-    _ymin = -::larutil::Geometry::GetME()->DetHalfHeight();
-    _ymax = ::larutil::Geometry::GetME()->DetHalfHeight();
-    _zmin = 0;
-    _zmax = ::larutil::Geometry::GetME()->DetLength();
+    _hTrackTotLen = new TH1D("hTrackTotLen","Summed Length of All Tracks in one Event; Sum length [meters]", 100, 0, 100);
+    _hTrackPDG = new TH1I("hTrackPDG","PDG of All Tracks; PDG Code", 6001, -3000, 3000);
+    _hNumTracks = new TH1I("hNumTracks","Number of Tracks / Event; Tracks", 100, 0, 100);
 
     return true;
   }
@@ -35,26 +29,29 @@ namespace larlite {
   
   bool MCShowerBackground::analyze(storage_manager* storage) {
 
-    srand (time(NULL));
-    
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
+    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
+    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
     // make a vector of all tracks. Do this only once
     _allTracks.clear();
     _allTrackIDs.clear();
-    double frac=0;
+    int nTracks = 0;
     for (size_t m=0; m < evt_mctracks->size(); m++){
-      if ( (evt_mctracks->at(m).Start().T() > -0.8E6) and (evt_mctracks->at(m).Start().T() < 0.8E6) ){
-      frac += 1;
-      totMuonLen += addTrack(evt_mctracks->at(m));
+      int pdg = evt_mctracks->at(m).PdgCode();
+      if( ( (abs(pdg) == 11) or (abs(pdg) == 13) or
+	    (abs(pdg == 211)) or (pdg == 2212)
+	    or (abs(pdg) == 13) ) and (evt_mctracks->at(m).size() > 1) ){
+	nTracks += 1;
+	totMuonLen += addTrack(&evt_mctracks->at(m));
+	_hTrackPDG->Fill(pdg);
       }
     }
-    _hMuonTotLen->Fill(totMuonLen/100.);
+    _hNumTracks->Fill(nTracks);
+    _hTrackTotLen->Fill(totMuonLen/100.);
     // now loop over all showers
 
     for (size_t s=0; s < evt_mcshower->size(); s++){
@@ -62,38 +59,30 @@ namespace larlite {
       //get current shower
       mcshower shr = evt_mcshower->at(s);
 
-
       _run = evt_mctracks->run() ;
       _subrun = evt_mctracks->subrun();
       _event = evt_mctracks->event_id(); 
 
 
-      // Now get particle track
-      // Trajectory consisting only of start & end points
-      /*
-      if ( (shr.DetProfile().X() > _xmin) and (shr.DetProfile().X() < _xmax) and
-	   (shr.DetProfile().Y() > _ymin) and (shr.DetProfile().Y() < _ymax) and
-	   (shr.DetProfile().Z() > _zmin) and (shr.DetProfile().Z() < _zmax) )
-      */
-      if (shr.DetProfile().X() == 0)
-	_inActiveVolume = 0;
+      _trackID = shr.TrackID();
+      _inActiveVolume = 1;
+      
+      if ((shr.PdgCode() == 11) or (shr.PdgCode() == -11) ){
+	_X = shr.Start().X();
+	_Y = shr.Start().Y();
+	_Z = shr.Start().Z();
+      }
       else{
-
-	_trackID = shr.TrackID();
-	_inActiveVolume = 1;
-	/*
-	_X = rand() % 256;
-	_Y = rand() % 116;
-	_Z = rand() % 1036;
-	*/
 	_X = shr.DetProfile().X();
 	_Y = shr.DetProfile().Y();
 	_Z = shr.DetProfile().Z();
+      }
 
-	std::vector<double> shrStart = {_X, _Y, _Z};
-	//	_Px = shr.DetProfile().Px();
-	//	_Py = shr.DetProfile().Py();
-	//	_Pz = shr.DetProfile().Pz();
+      std::vector<double> shrStart = {_X, _Y, _Z};
+      
+      if(_cutParamCalculator.isInVolume(shrStart)){
+	_inActiveVolume = 1;
+	
 	_Px = shr.Start().Px();
 	_Py = shr.Start().Py();
 	_Pz = shr.Start().Pz();
@@ -200,7 +189,10 @@ namespace larlite {
 	// Fill only if inActiveVolume
 	_ana_tree->Fill();
       }
-    
+      else
+	_inActiveVolume = 0;
+      
+      
     }//for all particles
     
     _evtN += 1;
@@ -211,32 +203,28 @@ namespace larlite {
   bool MCShowerBackground::finalize() {
     
     _ana_tree->Write();
-    _hMuonTotLen->Write();
+    _hTrackTotLen->Write();
+    _hNumTracks->Write();
+    _hTrackPDG->Write();
 
     return true;
   }
 
 
-  double MCShowerBackground::addTrack(mctrack track){
+  double MCShowerBackground::addTrack(mctrack *track){
 
     double totLen = 0;
-    if ( (abs(track.PdgCode()) == 13) and (track.size() > 1) ){
-      std::vector<std::vector<double> > thisTrack;    
-
-      for (size_t i=0; i < track.size(); i++){
-	thisTrack.push_back( {track.at(i).X(), track.at(i).Y(), track.at(i).Z()} );
-	if (i > 0)
-	  totLen += pow ( (track.at(i-1).X()-track.at(i).X())*(track.at(i-1).X()-track.at(i).X()) +
-			  (track.at(i-1).Y()-track.at(i).Y())*(track.at(i-1).Y()-track.at(i).Y()) +
-			  (track.at(i-1).Z()-track.at(i).Z())*(track.at(i-1).Z()-track.at(i).Z()), 0.5);
-      }// for all track steps
-      /*
-      thisTrack.push_back( {track.at(0).X(), track.at(0).Y(), track.at(0).Z()} ); 
-      thisTrack.push_back( {track.back().X(), track.back().Y(), track.back().Z()} ); 
-      */
-      _allTrackIDs.push_back(track.TrackID());
-      _allTracks.push_back(thisTrack);
-    }// if a muon
+    std::vector<std::vector<double> > thisTrack;    
+    
+    for (size_t i=0; i < track->size(); i++){
+      thisTrack.push_back( {track->at(i).X(), track->at(i).Y(), track->at(i).Z()} );
+      if (i > 0)
+	totLen += pow ( (track->at(i-1).X()-track->at(i).X())*(track->at(i-1).X()-track->at(i).X()) +
+			(track->at(i-1).Y()-track->at(i).Y())*(track->at(i-1).Y()-track->at(i).Y()) +
+			(track->at(i-1).Z()-track->at(i).Z())*(track->at(i-1).Z()-track->at(i).Z()), 0.5);
+    }// for all track steps
+    _allTrackIDs.push_back(track->TrackID());
+    _allTracks.push_back(thisTrack);
     return totLen;
   }
 

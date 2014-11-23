@@ -20,8 +20,6 @@
 #include "ShowerCutCalculator.h"
 #include <vector>
 #include <string>
-#include <time.h>
-#include <stdlib.h>
 
 namespace larlite {
   /**
@@ -60,7 +58,7 @@ namespace larlite {
 
     void resetTree();
 
-    double addTrack(mctrack track);
+    double addTrack(mctrack *track);
 
     protected:
 
@@ -159,7 +157,11 @@ namespace larlite {
 	std::vector<std::vector<double> > AncestorTraj;
 
     //histogram for muon track length
-    TH1D *_hMuonTotLen;
+    TH1D *_hTrackTotLen;
+    //histogram for number of tracks
+    TH1I *_hNumTracks;
+    //histogram for number of tracks
+    TH1I *_hTrackPDG;
 
     // evaluate time-performance
     clock_t t;

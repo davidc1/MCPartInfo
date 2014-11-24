@@ -17,7 +17,7 @@ rootlibmap() {
 ######################################################
 # MCPartGetter
 rootlibmap libMCPartInfo_MCPartGetter.rootmap libMCPartInfo_MCPartGetter.so $LARLITE_USERDEVDIR/MCPartInfo/MCPartGetter/LinkDef.h \
-    libLArLite_Analysis.so libRooFit.so
+    libLArLite_Base.so libLArLite_Analysis.so libLArLite_LArUtil.so
 
 
 

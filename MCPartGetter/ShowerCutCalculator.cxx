@@ -181,9 +181,13 @@ void ShowerCutCalculator::getDistanceToWall(std::vector<double> shrStart,
 					    std::vector<double> shrDir,
 					    double &distToWallForwards,
 					    double &distToWallBackwards){
-
+  std::cout << "Shower Position: [" << shrStart.at(0) << ", "
+	    << shrStart.at(1) << ", " << shrStart.at(2) << "]" << std::endl;
+  std::cout << "Shower Direction: [" << shrDir.at(0) << ", "
+	    << shrDir.at(1) << ", " << shrDir.at(2) << "]" << std::endl;
   distToWallForwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
   distToWallBackwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
+  std::cout << "Dist Back to Wall: " << distToWallBackwards << std::endl;
 
   return;
 }

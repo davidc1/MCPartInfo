@@ -17,8 +17,6 @@
 #include "MakeShowers.h"
 #include "MakeMCTree.h"
 #include "ShowerCutCalculator.h"
-#include "Pi0RooPDF.h"
-#include "Pi0PdfMaker.h"
 #include "MakeMyTracks.h"
 #include "MakeMyShowers.h"
 #include "GetPi0Distributions.h"
@@ -46,8 +44,6 @@ namespace larlite {
 class TreeNode;
 class TreeTop;
 class ShowerCutCalculator;
-class Pi0RooPDF;
-class Pi0PdfMaker;
 //ADD_EMPTY_CLASS ... do not change this comment line
 #endif
 

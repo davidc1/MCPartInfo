@@ -56,8 +56,8 @@ my_proc.add_process(shrBackground)
 
 # Let's run it.
 #t0 = int(round(time.time()*1000))
-#numEvts = 18
-my_proc.run()
+#numEvts = 10
+my_proc.run(0,7000)
 #t1 = int(round(time.time()*1000))
 #dt = (t1-t0)/1000. #seconds
 #print "time diff is {0} sec.".format(dt)

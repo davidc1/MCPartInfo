@@ -18,7 +18,7 @@ namespace larlite {
     _cutParamCalculator.SetAlgoProperties();
 
     /// prepare total muon length histogram
-    _hTrackTotLen = new TH1D("hTrackTotLen","Summed Length of All Tracks in one Event; Sum length [meters]", 100, 0, 100);
+    _hTrackTotLen = new TH1D("hTrackTotLen","Summed Length of All Tracks in one Event; Sum length [meters]", 100, 0, 1000);
     _hTrackPDG = new TH1I("hTrackPDG","PDG of All Tracks; PDG Code", 6001, -3000, 3000);
     _hNumTracks = new TH1I("hNumTracks","Number of Tracks / Event; Tracks", 100, 0, 100);
 
@@ -30,9 +30,9 @@ namespace larlite {
   bool MCShowerBackground::analyze(storage_manager* storage) {
 
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
+    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
+    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -41,17 +41,21 @@ namespace larlite {
     _allTrackIDs.clear();
     int nTracks = 0;
     for (size_t m=0; m < evt_mctracks->size(); m++){
-      int pdg = evt_mctracks->at(m).PdgCode();
-      if( ( (abs(pdg) == 11) or (abs(pdg) == 13) or
-	    (abs(pdg == 211)) or (pdg == 2212)
-	    or (abs(pdg) == 13) ) and (evt_mctracks->at(m).size() > 1) ){
-	nTracks += 1;
-	totMuonLen += addTrack(&evt_mctracks->at(m));
-	_hTrackPDG->Fill(pdg);
-      }
+      //time-selection (only if in-frame)
+      if ( (evt_mctracks->at(m).Start().T() > -0.8E6) and
+	   (evt_mctracks->at(m).Start().T() < 0.8E6) ){
+	int pdg = evt_mctracks->at(m).PdgCode();
+	if( ( (abs(pdg) == 11) or (abs(pdg) == 13) or
+	      (abs(pdg == 211)) or (pdg == 2212)
+	      or (abs(pdg) == 13) ) and (evt_mctracks->at(m).size() > 1) ){
+	  nTracks += 1;
+	  totMuonLen += addTrack(&evt_mctracks->at(m));
+	  _hTrackPDG->Fill(pdg);
+	}//if right pdg
+      }//if track in-time with frame
     }
     _hNumTracks->Fill(nTracks);
-    _hTrackTotLen->Fill(totMuonLen/100.);
+    //    _hTrackTotLen->Fill(totMuonLen/100.);
     // now loop over all showers
 
     for (size_t s=0; s < evt_mcshower->size(); s++){
@@ -89,12 +93,7 @@ namespace larlite {
 
 	double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
 	std::vector<double> shrDir = {_Px/shrMom,_Py/shrMom,_Pz/shrMom};
-	std::vector<double> shrOrigin = { shrStart.at(0)-shrDir.at(0)*300,
-					  shrStart.at(1)-shrDir.at(1)*300,
-					  shrStart.at(2)-shrDir.at(2)*300 };
-	std::vector<double> shrEnd = { shrStart.at(0)+shrDir.at(0)*10,
-				       shrStart.at(1)+shrDir.at(1)*10,
-				       shrStart.at(2)+shrDir.at(2)*10 };
+	//std::vector<double> shrDir = {_Px,_Py,_Pz};
 
 	_T          = shr.DetProfile().T();
 	_E          = shr.Start().E();
@@ -183,7 +182,8 @@ namespace larlite {
 	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, &_allTrackIDs, shr.AncestorTrackID(), 
 						 _minMuDistExceptAncestor, _minMuIPExceptAncestor, _distToIPExceptAncestor);
 	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
-	
+	std::cout << "Dist to Wall Back: " << _distBackAlongTraj << std::endl << std::endl;
+	_hTrackTotLen->Fill(_distBackAlongTraj);
 
 	// Now Fill Tree!
 	// Fill only if inActiveVolume

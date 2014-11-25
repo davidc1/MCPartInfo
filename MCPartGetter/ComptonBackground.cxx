@@ -214,7 +214,7 @@ namespace larlite {
 	      mcpart mother = event_part->at(_MCgetter.searchParticleMap( result.at(j).getParentId() ));
 	      MotherTraj = _MCgetter.getTrajectoryPointsInTPC(&mother,0);
 	      if (MotherTraj.size() > 0)
-		_MotherDist = _pointDist.DistanceToTrack(&partStart,&MotherTraj);
+		_MotherDist = _pointDist.DistanceToTrack(partStart,MotherTraj);
 	      _MotherPDG = mother.PdgCode();
 	      _MotherE   = mother.Trajectory().at(0).E();
 	      //given time of interaction that produced electron, find step of mother right before and get energy
@@ -229,8 +229,8 @@ namespace larlite {
 	      mcpart ancestor = event_part->at(_MCgetter.searchParticleMap( result.at(j).getAncestorId() ));
 	      AncestorTraj = _MCgetter.getTrajectoryPointsInTPC(&ancestor,0);
 	      if (AncestorTraj.size() > 0){
-		_AncestorDist = _pointDist.DistanceToTrack(&partStart,&AncestorTraj);
-		_PoCAtoAncestor = _PoCA.ClosestApproachToTrajectory(&AncestorTraj,&partOrigin,&partStart,c1,c2);
+		_AncestorDist = _pointDist.DistanceToTrack(partStart,AncestorTraj);
+		_PoCAtoAncestor = _PoCA.ClosestApproachToTrajectory(AncestorTraj,partOrigin,partStart,c1,c2);
 		_PoCAtoAncestorDist = sqrt ( (c2.at(0)-partStart.at(0))*(c2.at(0)-partStart.at(0)) +
 					     (c2.at(1)-partStart.at(1))*(c2.at(1)-partStart.at(1)) +
 					     (c2.at(2)-partStart.at(2))*(c2.at(2)-partStart.at(2)) );
@@ -252,9 +252,9 @@ namespace larlite {
 
 	  for (size_t y=0; y < muonTracks.size(); y++){
 
-	    double tmpPoka = _PoCA.ClosestApproachToTrajectory(&muonTracks.at(y),&partOrigin,&partEnd,c1,c2);
+	    double tmpPoka = _PoCA.ClosestApproachToTrajectory(muonTracks.at(y),partOrigin,partEnd,c1,c2);
 	    //calculate distance from PoCA point to e- start point
-	    double tmpDist = _pointDist.DistanceToTrack(&partStart,&muonTracks.at(y));
+	    double tmpDist = _pointDist.DistanceToTrack(partStart,muonTracks.at(y));
 	    if (tmpDist < minDist) { minDist = tmpDist; }
 	    if (tmpPoka < minPoka) {
 	      minPoka = tmpPoka;

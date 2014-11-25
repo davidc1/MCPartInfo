@@ -72,8 +72,8 @@ void ShowerCutCalculator::getNearestMuonParams(std::vector<double> *shrStart,
   for (size_t u=0; u < muonTracks->size(); u++){
 
     if ( (muonTracks->at(u).size() > 1) and (muonIDs->at(u) != ancestorID) ){
-      double tmpDist = _pointDist.DistanceToTrack(shrStart, &(muonTracks->at(u)));
-      double tmpIP = _PoCA.ClosestApproachToTrajectory(&muonTracks->at(u), &shrOrigin, &shrEnd, c1, c2);
+      double tmpDist = _pointDist.DistanceToTrack(*shrStart, muonTracks->at(u));
+      double tmpIP = _PoCA.ClosestApproachToTrajectory(muonTracks->at(u), shrOrigin, shrEnd, c1, c2);
       
       if (tmpDist < minDist) { minDist = tmpDist; }
       if (tmpIP < minIP) { 
@@ -144,8 +144,8 @@ void ShowerCutCalculator::getAncestorMuonParams(std::vector<double> *shrStart,
   
   if ( muonTrack->size() > 1 ){
 
-    double tmpDist = _pointDist.DistanceToTrack(shrStart, muonTrack);
-    double tmpIP = _PoCA.ClosestApproachToTrajectory(muonTrack, &shrOrigin, &shrEnd, c1, c2);
+    double tmpDist = _pointDist.DistanceToTrack(*shrStart, *muonTrack);
+    double tmpIP = _PoCA.ClosestApproachToTrajectory(*muonTrack, shrOrigin, shrEnd, c1, c2);
     
     if (tmpDist < minDist) { minDist = tmpDist; }
     if (tmpIP < minIP) { 
@@ -181,13 +181,13 @@ void ShowerCutCalculator::getDistanceToWall(std::vector<double> shrStart,
 					    std::vector<double> shrDir,
 					    double &distToWallForwards,
 					    double &distToWallBackwards){
-  std::cout << "Shower Position: [" << shrStart.at(0) << ", "
-	    << shrStart.at(1) << ", " << shrStart.at(2) << "]" << std::endl;
-  std::cout << "Shower Direction: [" << shrDir.at(0) << ", "
-	    << shrDir.at(1) << ", " << shrDir.at(2) << "]" << std::endl;
+  //  std::cout << "Shower Position: [" << shrStart.at(0) << ", "
+  //	    << shrStart.at(1) << ", " << shrStart.at(2) << "]" << std::endl;
+  //  std::cout << "Shower Direction: [" << shrDir.at(0) << ", "
+  //	    << shrDir.at(1) << ", " << shrDir.at(2) << "]" << std::endl;
   distToWallForwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
   distToWallBackwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
-  std::cout << "Dist Back to Wall: " << distToWallBackwards << std::endl;
+  //  std::cout << "Dist Back to Wall: " << distToWallBackwards << std::endl;
 
   return;
 }

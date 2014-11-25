@@ -30,9 +30,9 @@ namespace larlite {
   bool MCShowerBackground::analyze(storage_manager* storage) {
 
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
+    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
+    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -182,7 +182,6 @@ namespace larlite {
 	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, &_allTrackIDs, shr.AncestorTrackID(), 
 						 _minMuDistExceptAncestor, _minMuIPExceptAncestor, _distToIPExceptAncestor);
 	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
-	std::cout << "Dist to Wall Back: " << _distBackAlongTraj << std::endl << std::endl;
 	_hTrackTotLen->Fill(_distBackAlongTraj);
 
 	// Now Fill Tree!

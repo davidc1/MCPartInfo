@@ -14,9 +14,14 @@ namespace larlite {
       _tree->Branch("_Nshowers",&_Nshowers,"NShowers/I");
       _tree->Branch("_ShowerE1",&_ShowerE1,"ShowerE1/D");
       _tree->Branch("_ShowerE2",&_ShowerE2,"ShowerE2/D");
+      _tree->Branch("_E1mc",&_E1mc,"E1mc/D");
+      _tree->Branch("_E2mc",&_E2mc,"E2mc/D");
       _tree->Branch("_Angle",&_Angle,"Angle/D");
+      _tree->Branch("_Anglemc",&_Anglemc,"Anglemc/D");
       _tree->Branch("_VtxDist1",&_VtxDist1,"VtxDist1/D");
       _tree->Branch("_VtxDist2",&_VtxDist2,"VtxDist2/D");
+      _tree->Branch("_Econt1",&_Econt1,"Econt1/D");
+      _tree->Branch("_Econt2",&_Econt2,"Econt2/D");
     }	
 
     return true;
@@ -51,6 +56,12 @@ namespace larlite {
       _ShowerE1 = dep1.E();
       _ShowerE2 = dep2.E();
 
+      _E1mc = start1.E();
+      _E2mc = start2.E();
+
+      _Econt1 = dep1.E()/start1.E();
+      _Econt2 = dep2.E()/start2.E();
+
       _totE = _ShowerE1+_ShowerE2;
       
       _VtxDist1 = sqrt( (dep1.X() - start1.X())*(dep1.X() - start1.X()) +
@@ -69,6 +80,15 @@ namespace larlite {
 			  dep2.Py()*dep2.Py() +
 			  dep2.Pz()*dep2.Pz() );
 
+      double mom1mc = sqrt( start1.Px()*start1.Px() +
+			    start1.Py()*start1.Py() +
+			    start1.Pz()*start1.Pz() );
+
+      double mom2mc = sqrt( start2.Px()*start2.Px() +
+			    start2.Py()*start2.Py() +
+			    start2.Pz()*start2.Pz() );
+
+      _Anglemc = (180./3.14)*acos( (start1.Px()*start2.Px() + start1.Py()*start2.Py() + start1.Pz()*start2.Pz())/(mom1mc*mom2mc) );
 
       _Angle = (180./3.14)*acos( (dep1.Px()*dep2.Px() + dep1.Py()*dep2.Py() + dep1.Pz()*dep2.Pz())/(mom1*mom2) );
 
@@ -94,9 +114,14 @@ namespace larlite {
     _totE = -1;
     _ShowerE1 = -1;
     _ShowerE2 = -1;
+    _E1mc = -1;
+    _E2mc = -1;
     _Angle = -1;
+    _Anglemc = -1;
     _VtxDist1 = -1;
     _VtxDist2 = -1;
+    _Econt1 = -1;
+    _Econt2 = -1;
     
     return;
   }

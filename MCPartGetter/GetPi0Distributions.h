@@ -58,9 +58,14 @@ namespace larlite {
     double _totE;
     double _ShowerE1;
     double _ShowerE2;
+    double _E1mc;
+    double _E2mc;
     double _Angle;
+    double _Anglemc;
     double _VtxDist1;
     double _VtxDist2;
+    double _Econt1;
+    double _Econt2;
 
   };
 }

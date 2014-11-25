@@ -34,7 +34,9 @@ my_proc.set_io_mode(fmwk.storage_manager.kBOTH)
 # This time, we use a sample file prepared.
 #my_proc.add_input_file("./../../../NevisDecoder/Decoder/mac/xmit_subrun_2014_01_13_1_dma_no_1.root")
 #my_proc.add_input_file("./../../../NevisDecoder/Decoder/mac/xmit_subrun_2014_01_13_1_trigger.root")
-my_proc.add_input_file(sys.argv[1])
+for x in range(len(sys.argv)-1):
+    my_proc.add_input_file(sys.argv[x+1])
+#my_proc.add_input_file(sys.argv[1])
 
 # Specify ROOT TDirectory in the file if such structure is present (which is the case for DataScanner output)
 #my_proc.set_input_rootdir("scanner")
@@ -55,8 +57,8 @@ my_proc.add_process(makeshowers)
 
 # Let's run it.
 t0 = int(round(time.time()*1000))
-numEvts = 15
-my_proc.run(0,numEvts)
+numEvts = 50
+my_proc.run(0,50)
 t1 = int(round(time.time()*1000))
 dt = (t1-t0)/1000. #seconds
 print "time diff is {0} sec.".format(dt)

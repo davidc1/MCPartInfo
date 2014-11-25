@@ -18,6 +18,7 @@
 #include "Analysis/ana_base.h"
 #include "MCgetter.h"
 #include <string>
+#include <algorithm>
 
 namespace larlite {
   /**
@@ -57,10 +58,12 @@ namespace larlite {
     void getAllShowerParticles(treenode tree,
 			       std::vector<unsigned int> &trackIDs,
 			       event_mcpart *evt_part,
-			       event_mctree *evt_tree);
+			       event_mctree *evt_tree,
+			       treenode toptree);
 
     void PrepareTree();
     void ResetTree();
+    void resetPartTree();
     
 
     protected:
@@ -75,18 +78,38 @@ namespace larlite {
     double _Ecut;
 
 
-    // Tree information
+    // Shower Tree information
     TTree *_showertree;
     // variables for tree
+    int    _showerTrackID;
     double _showerE;
-    int _showerPDG;
+    int    _showerPDG;
     double _showerStartX;
     double _showerStartY;
     double _showerStartZ;
     std::vector<std::vector<std::vector<double> > > ShowerTraj;
-    int _inTPC;
-    int _eventN;
-    std::string Process;
+    std::vector<std::vector<double> > AncestorTraj;
+    int    _inTPC;
+    int    _eventN;
+    std::string _showerProcess;
+    int    _numEl;
+    int    _numCompt;
+    int    _numConv;
+    int    _numComptE;
+    int    _numConvE;
+
+    // Part Tree information
+    TTree *_parttree;
+    // variables for tree
+    int    _partTrackID;
+    double _partE;
+    int    _partPDG;
+    std::string _partProcess;
+    std::vector<std::vector<double> > PartTraj;
+    int    _shrID;
+    int    _shrPDG;
+    double _shrE;
+    std::string _shrProc;
 
     //mcgetter
     MCgetter _MCgetter;

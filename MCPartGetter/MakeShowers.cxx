@@ -20,16 +20,34 @@ namespace larlite {
 
     if(_showertree) delete _showertree;
     _showertree = new TTree("shower_tree","");
+    _showertree->Branch("_showerTrackID",&_showerTrackID,"showerTrackID/I");
     _showertree->Branch("_showerE",&_showerE,"showerE/D");
     _showertree->Branch("_showerPDG",&_showerPDG,"showerPDG/I");
     _showertree->Branch("_showerStartX",&_showerStartX,"showerStartX/D");
     _showertree->Branch("_showerStartY",&_showerStartY,"showerStartY/D");
     _showertree->Branch("_showerStartZ",&_showerStartZ,"showerStartZ/D");
     _showertree->Branch("ShowerTraj",&ShowerTraj);
+    _showertree->Branch("AncestorTraj",&AncestorTraj);
     _showertree->Branch("_inTPC",&_inTPC,"inTPC/I");
-    _showertree->Branch("Process",&Process);
+    _showertree->Branch("_showerProcess",&_showerProcess);
     _showertree->Branch("_eventN",&_eventN,"eventN/I");
-    
+    _showertree->Branch("_numEl",&_numEl,"numEl/i");
+    _showertree->Branch("_numCompt",&_numCompt,"numCompt/I");
+    _showertree->Branch("_numConv",&_numConv,"numConv/I");
+    _showertree->Branch("_numComptE",&_numComptE,"numComptE/I"); //above some energy threshold (200 MeV)
+    _showertree->Branch("_numConvE",&_numConvE,"numConvE/I");
+
+    if (_parttree) delete _parttree;
+    _parttree = new TTree("part_tree","");
+    _parttree->Branch("_partTrackID",&_partTrackID,"partTrackID/I");
+    _parttree->Branch("_partE",&_partE,"partE/D");
+    _parttree->Branch("_partPDG",&_partPDG,"partPDG/I");
+    _parttree->Branch("_partProcess",&_partProcess);
+    _parttree->Branch("PartTraj",&PartTraj);
+    _parttree->Branch("_shrID",&_shrID,"shrID/I");
+    _parttree->Branch("_shrPDG",&_shrPDG,"shrPDG/I");
+    _parttree->Branch("_shrE",&_shrE,"shrE/D");
+    _parttree->Branch("_shrProc",&_shrProc);
   }
   
 
@@ -70,6 +88,7 @@ namespace larlite {
   bool MakeShowers::finalize() {
 
     _showertree->Write();
+    _parttree->Write();
 
     return true;
   }
@@ -80,12 +99,6 @@ namespace larlite {
     // if this particle has PDG == 22 AND
     // if any of the daughters of a particle are PDG == 11 or -11
     // then this particle should make a shower
-    if ( tree.getNodeIndex() == 129035 ){
-      std::cout << "found it! " << std::endl;
-      std::cout << "TrackID: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).TrackId() << std::endl;
-      std::cout << "PDG: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode() << std::endl;
-      std::cout << "Energy: " << evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).Trajectory().at(0).E() << std::endl;
-    }
     if ( (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 11) or
 	 (abs(evt_part->at( evt_tree->searchParticleMap(tree.getNodeIndex()) ).PdgCode()) == 22) )
       {
@@ -115,7 +128,7 @@ namespace larlite {
 
     //get all daughter charged particles to make up the shower
     std::vector<unsigned int> showerPartTrackIDs;
-    getAllShowerParticles(tree, showerPartTrackIDs, evt_part, evt_tree);
+    getAllShowerParticles(tree, showerPartTrackIDs, evt_part, evt_tree, tree);
     // add al daughter tracks
     shr.DaughterTrackID(showerPartTrackIDs);
 
@@ -128,6 +141,12 @@ namespace larlite {
 	ShowerTraj.push_back(thistrack);
     }
 
+    //find ancestor track
+    int ancID = tree.getAncestorId();
+    if (evt_tree->searchParticleMap(ancID) > 0){
+      mcpart anc = evt_part->at(evt_tree->searchParticleMap(ancID));
+      AncestorTraj = _MCgetter.getTrajectoryPointsInTPC(&anc,0);
+    }
 
     shr.PdgCode(thispart.PdgCode());
     shr.Process(thispart.Process());
@@ -152,7 +171,7 @@ namespace larlite {
     }
     
     _showerPDG = thispart.PdgCode();
-    Process = thispart.Process();
+    _showerProcess = thispart.Process();
 
 
     // mother of showering particle
@@ -180,24 +199,76 @@ namespace larlite {
   }
 
 
-  void MakeShowers::getAllShowerParticles(treenode tree, std::vector<unsigned int> &trackIDs, event_mcpart *evt_part, event_mctree *evt_tree){
+  void MakeShowers::getAllShowerParticles(treenode tree, std::vector<unsigned int> &trackIDs, event_mcpart *evt_part, event_mctree *evt_tree, treenode toptree){
     
     //loop over all children of node and add charged particles to shower vector
     std::vector<treenode> daughters = tree.getChildren();
     if (daughters.size() == 0) { return; }
     for (size_t i=0; i < daughters.size(); i++){
-      trackIDs.push_back(daughters.at(i).getNodeIndex());
-      //if e-/e+ add track info to ShowerTraj
-      if ( abs(evt_part->at(evt_tree->searchParticleMap(tree.getNodeIndex())).PdgCode()) == 11 ){
-	mcpart thispart = evt_part->at(evt_tree->searchParticleMap(tree.getNodeIndex()));
-	std::vector<std::vector<double> > thistrack = _MCgetter.getTrajectoryPointsInTPC(&thispart,0);
-	if (thistrack.size() > 0)
-	  ShowerTraj.push_back(thistrack);
-      }//if charged particle
-      getAllShowerParticles(daughters.at(i), trackIDs, evt_part, evt_tree);
+      
+      //find this trackID in vector: if not found go on
+      std::vector<unsigned int>::iterator it;
+      it = find(trackIDs.begin(), trackIDs.end(), daughters.at(i).getNodeIndex());
+      // if not found
+      if ( it == trackIDs.end() ){
+      
+	trackIDs.push_back(daughters.at(i).getNodeIndex());
+	//if e-/e+ add track info to ShowerTraj
+	if ( abs(evt_part->at(evt_tree->searchParticleMap(daughters.at(i).getNodeIndex())).PdgCode()) == 11 ){
+	  mcpart thispart = evt_part->at(evt_tree->searchParticleMap(daughters.at(i).getNodeIndex()));
+	  std::vector<std::vector<double> > thistrack = _MCgetter.getTrajectoryPointsInTPC(&thispart,0);
+	  if (thistrack.size() > 0)
+	    ShowerTraj.push_back(thistrack);
+	  //keep track of stats for shower (num of particles)
+	  _numEl += 1;
+	  if (thispart.Process() == "compt"){
+	    _numCompt += 1;
+	  if (thispart.Trajectory().at(0).E() > 0.2)
+	    _numComptE += 1;
+	  }
+	  if (thispart.Process() == "conv"){
+	    _numConv += 1;
+	    if (thispart.Trajectory().at(0).E() > 0.2)
+	      _numConvE += 1;
+	  }
+	  //Fill stats for this particle
+	  resetPartTree();
+	  _partTrackID = thispart.TrackId();
+	  _partE = thispart.Trajectory().at(0).E();
+	  _partPDG = thispart.PdgCode();
+	  _partProcess = thispart.Process();
+	  if (thistrack.size() > 0)
+	    PartTraj = thistrack;
+	  mcpart top = evt_part->at(evt_tree->searchParticleMap(toptree.getNodeIndex()));
+	  _shrID = top.TrackId();
+	  _shrPDG = top.PdgCode();
+	  _shrE = top.Trajectory().at(0).E();
+	  _shrProc = top.Process();
+	  _parttree->Fill();
+	  
+	}//if charged particle
+      }//if this particle was not already added
+      getAllShowerParticles(daughters.at(i), trackIDs, evt_part, evt_tree, toptree);
     }
     
     return;
+  }
+
+
+  void MakeShowers::resetPartTree(){
+
+    if (_parttree){
+      _partTrackID = -1;
+      _partE = -1;
+      _partPDG = -1;
+      _partProcess = "";
+      PartTraj.clear();
+      _shrID = -1;
+      _shrPDG = -1;
+      _shrE = -1;
+      _shrProc = "";
+    }
+
   }
 
   // reset tere
@@ -211,9 +282,15 @@ namespace larlite {
       _showerStartZ = -1;
       _showerE = -1;
       ShowerTraj.clear();
+      AncestorTraj.clear();
       _showerPDG = -1;
-      Process = "";
+      _showerProcess = "";
       _eventN = -1;
+      _numEl = 0;
+      _numCompt = 0;
+      _numConv = 0;
+      _numComptE = 0;
+      _numConvE = 0;
 
     }
 

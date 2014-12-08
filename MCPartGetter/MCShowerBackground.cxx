@@ -30,9 +30,9 @@ namespace larlite {
   bool MCShowerBackground::analyze(storage_manager* storage) {
 
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
+    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
+    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -49,7 +49,7 @@ namespace larlite {
 	      (abs(pdg == 211)) or (pdg == 2212)
 	      or (abs(pdg) == 13) ) and (evt_mctracks->at(m).size() > 1) ){
 	  nTracks += 1;
-	  totMuonLen += addTrack(&evt_mctracks->at(m));
+	  totMuonLen += addTrack(evt_mctracks->at(m));
 	  _hTrackPDG->Fill(pdg);
 	}//if right pdg
       }//if track in-time with frame
@@ -63,134 +63,138 @@ namespace larlite {
       //get current shower
       mcshower shr = evt_mcshower->at(s);
 
-      _run = evt_mctracks->run() ;
-      _subrun = evt_mctracks->subrun();
-      _event = evt_mctracks->event_id(); 
-
-
-      _trackID = shr.TrackID();
-      _inActiveVolume = 1;
-      
-      if ((shr.PdgCode() == 11) or (shr.PdgCode() == -11) ){
-	_X = shr.Start().X();
-	_Y = shr.Start().Y();
-	_Z = shr.Start().Z();
-      }
-      else{
-	_X = shr.DetProfile().X();
-	_Y = shr.DetProfile().Y();
-	_Z = shr.DetProfile().Z();
-      }
-
-      std::vector<double> shrStart = {_X, _Y, _Z};
-      
-      if(_cutParamCalculator.isInVolume(shrStart)){
-	_inActiveVolume = 1;
-	
-	_Px = shr.Start().Px();
-	_Py = shr.Start().Py();
-	_Pz = shr.Start().Pz();
-
-	double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
-	std::vector<double> shrDir = {_Px/shrMom,_Py/shrMom,_Pz/shrMom};
-	//std::vector<double> shrDir = {_Px,_Py,_Pz};
-
-	_T          = shr.DetProfile().T();
-	_E          = shr.Start().E();
-	_process    = shr.Process();
-	_PDG        = shr.PdgCode();
-
-	// get mother information
-	// if shower starts with photon -> mother is the photon
-	if (_PDG == 22){
-	  _parentPDG = shr.PdgCode();
-	  _parentX   = shr.Start().X();
-	  _parentY   = shr.Start().Y();
-	  _parentZ   = shr.Start().Z();
-	  _parentT   = shr.Start().T();
-	  _parentPx  = shr.Start().Px();
-	  _parentPy  = shr.Start().Py();
-	  _parentPz  = shr.Start().Pz();
-	  _parentE   = shr.Start().E();
-	}	  
-	// otherwise -> electron/positron's mother is the "mother"
-	else{
-	  _parentPDG = shr.MotherPdgCode();
-	  _parentX = shr.MotherStart().X();
-	  _parentY = shr.MotherStart().Y();
-	  _parentZ = shr.MotherStart().Z();
-	  _parentT = shr.MotherStart().T();
-	  _parentPx = shr.MotherStart().Px();
-	  _parentPy = shr.MotherStart().Py();
-	  _parentPz = shr.MotherStart().Pz();
-	  _parentE = shr.MotherStart().E();
-	}
-
-	std::vector<double> pVtx = { _parentX, _parentY, _parentZ } ; 
-	if(_cutParamCalculator.isInVolume(pVtx))
-	  _parentInActiveVolume = 1; 
-	else
-	  _parentInActiveVolume = 0;
-	
-	
-
-	// get ancestor information
-	_ancestorPDG = shr.AncestorPdgCode();
-	_ancestorX   = shr.AncestorStart().X();
-	_ancestorY   = shr.AncestorStart().Y();
-	_ancestorZ   = shr.AncestorStart().Z();
-	_ancestorT   = shr.AncestorStart().T();
-	_ancestorPx  = shr.AncestorStart().Px();
-	_ancestorPy  = shr.AncestorStart().Py();
-	_ancestorPz  = shr.AncestorStart().Pz();
-	_ancestorE   = shr.AncestorStart().E();
-
-	_ancestorInActiveVolume = 0;
-	
-	//if ancestor is pi+/pi-/mu+/mu-/proton/e+/e- then find distance to track
-	if ( (abs(_ancestorPDG) == 11) or (abs(_ancestorPDG) == 13) or
-	     (abs(_ancestorPDG == 211)) or (_ancestorPDG == 2212) ){
+      //Make sure shower is PDG == 11 and mother == ancestor
+      if ( (shr.PdgCode() == 11) and (shr.MotherTrackID() == shr.AncestorTrackID()) ) {
 	  
-	  // try and find ancestor in mctracks and find IP/Dist to it
-	  for (size_t m=0; m < evt_mctracks->size(); m++)
-	    if (evt_mctracks->at(m).TrackID() == shr.AncestorTrackID()){
+	  _run = evt_mctracks->run() ;
+	  _subrun = evt_mctracks->subrun();
+	  _event = evt_mctracks->event_id(); 
+	  
+	  
+	  _trackID = shr.TrackID();
+	  _inActiveVolume = 1;
+	  
+	  if ((shr.PdgCode() == 11) or (shr.PdgCode() == -11) ){
+	    _X = shr.Start().X();
+	    _Y = shr.Start().Y();
+	    _Z = shr.Start().Z();
+	  }
+	  else{
+	    _X = shr.DetProfile().X();
+	    _Y = shr.DetProfile().Y();
+	    _Z = shr.DetProfile().Z();
+	  }
+	  
+	  geoalgo::Point_t shrStart(_X, _Y, _Z);
+	  
+	  if(_cutParamCalculator.isInVolume(shrStart)){
+	    _inActiveVolume = 1;
+	    
+	    _Px = shr.Start().Px();
+	    _Py = shr.Start().Py();
+	    _Pz = shr.Start().Pz();
 
-	      //get trajectory points
-	      std::vector<std::vector<std::vector<double> > > tracks;
-	      tracks.clear();
-	      std::vector<std::vector<double> > thistrack;
-	      std::vector<int> ID;
-	      ID.clear();
-	      AncestorTraj.clear();
-	      for (size_t i=0; i < evt_mctracks->at(m).size(); i++){
-		thistrack.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
-		AncestorTraj.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
-	      }
-	      if (thistrack.size() > 1){
-		// then the ancestor is a track that leaves charge in the detector
-		_ancestorInActiveVolume = 1;
-		tracks.push_back(thistrack);
-		ID.push_back(evt_mctracks->at(m).TrackID());
-		_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &tracks, &ID, 0, _ancDist, _ancIP, _ancToIP);
-	      }//if track > 1 in length
-	    }//if ancestor mctrack is found
-	}//for correct PDGs
+	    double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
+	    geoalgo::Vector_t shrDir(_Px/shrMom,_Py/shrMom,_Pz/shrMom);
+	    //std::vector<double> shrDir = {_Px,_Py,_Pz};
+	    
+	    _T          = shr.DetProfile().T();
+	    _E          = shr.Start().E();
+	    _process    = shr.Process();
+	    _PDG        = shr.PdgCode();
+	    
+	    // get mother information
+	    // if shower starts with photon -> mother is the photon
+	    if (_PDG == 22){
+	      _parentPDG = shr.PdgCode();
+	      _parentX   = shr.Start().X();
+	      _parentY   = shr.Start().Y();
+	      _parentZ   = shr.Start().Z();
+	      _parentT   = shr.Start().T();
+	      _parentPx  = shr.Start().Px();
+	      _parentPy  = shr.Start().Py();
+	      _parentPz  = shr.Start().Pz();
+	      _parentE   = shr.Start().E();
+	    }	  
+	    // otherwise -> electron/positron's mother is the "mother"
+	    else{
+	      _parentPDG = shr.MotherPdgCode();
+	      _parentX = shr.MotherStart().X();
+	      _parentY = shr.MotherStart().Y();
+	      _parentZ = shr.MotherStart().Z();
+	      _parentT = shr.MotherStart().T();
+	      _parentPx = shr.MotherStart().Px();
+	      _parentPy = shr.MotherStart().Py();
+	      _parentPz = shr.MotherStart().Pz();
+	      _parentE = shr.MotherStart().E();
+	    }
+	    
+	    geoalgo::Point_t pVtx(_parentX, _parentY, _parentZ); 
+	    if(_cutParamCalculator.isInVolume(pVtx))
+	      _parentInActiveVolume = 1; 
+	    else
+	      _parentInActiveVolume = 0;
+	    
+	    
+	    
+	    // get ancestor information
+	    _ancestorPDG = shr.AncestorPdgCode();
+	    _ancestorX   = shr.AncestorStart().X();
+	    _ancestorY   = shr.AncestorStart().Y();
+	    _ancestorZ   = shr.AncestorStart().Z();
+	    _ancestorT   = shr.AncestorStart().T();
+	    _ancestorPx  = shr.AncestorStart().Px();
+	    _ancestorPy  = shr.AncestorStart().Py();
+	    _ancestorPz  = shr.AncestorStart().Pz();
+	    _ancestorE   = shr.AncestorStart().E();
+	    
+	    _ancestorInActiveVolume = 0;
+	    
+	    //if ancestor is pi+/pi-/mu+/mu-/proton/e+/e- then find distance to track
+	    if ( (abs(_ancestorPDG) == 11) or (abs(_ancestorPDG) == 13) or
+		 (abs(_ancestorPDG == 211)) or (_ancestorPDG == 2212) ){
+	      
+	      // try and find ancestor in mctracks and find IP/Dist to it
+	      for (size_t m=0; m < evt_mctracks->size(); m++)
+		if (evt_mctracks->at(m).TrackID() == shr.AncestorTrackID()){
+		  
+		  //get trajectory points
+		  std::vector<geoalgo::Trajectory_t> tracks;
+		  tracks.clear();
+		  geoalgo::Trajectory_t thistrack(0,3);
+		  std::vector<int> ID;
+		  ID.clear();
+		  AncestorTraj.clear();
+		  for (size_t i=0; i < evt_mctracks->at(m).size(); i++){
+		    thistrack.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
+		    AncestorTraj.push_back( {evt_mctracks->at(m).at(i).X(), evt_mctracks->at(m).at(i).Y(), evt_mctracks->at(m).at(i).Z()} );
+		  }
+		  if (thistrack.size() > 1){
+		    // then the ancestor is a track that leaves charge in the detector
+		    _ancestorInActiveVolume = 1;
+		    tracks.push_back(thistrack);
+		    ID.push_back(evt_mctracks->at(m).TrackID());
+		    _cutParamCalculator.getNearestMuonParams(shrStart, shrDir, tracks, ID, 0, _ancDist, _ancIP, _ancToIP);
+		  }//if track > 1 in length
+		}//if ancestor mctrack is found
+	    }//for correct PDGs
+	    
+	    
+	    // get results from algorithms
+	    _cutParamCalculator.getNearestMuonParams(shrStart, shrDir, _allTracks, _allTrackIDs, 0,  _minMuDist, _minMuIP, _distToIP);
+	    _cutParamCalculator.getNearestMuonParams(shrStart, shrDir, _allTracks, _allTrackIDs, shr.AncestorTrackID(), 
+						     _minMuDistExceptAncestor, _minMuIPExceptAncestor, _distToIPExceptAncestor);
+	    _cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
+	    _hTrackTotLen->Fill(_distBackAlongTraj);
+	    
+	    // Now Fill Tree!
+	    // Fill only if inActiveVolume
+	    _ana_tree->Fill();
+	  }
+	  else
+	    _inActiveVolume = 0;
 
-	
-	// get results from algorithms
-	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, &_allTrackIDs, 0,  _minMuDist, _minMuIP, _distToIP);
-	_cutParamCalculator.getNearestMuonParams(&shrStart, &shrDir, &_allTracks, &_allTrackIDs, shr.AncestorTrackID(), 
-						 _minMuDistExceptAncestor, _minMuIPExceptAncestor, _distToIPExceptAncestor);
-	_cutParamCalculator.getDistanceToWall(shrStart, shrDir, _distAlongTraj, _distBackAlongTraj);
-	_hTrackTotLen->Fill(_distBackAlongTraj);
-
-	// Now Fill Tree!
-	// Fill only if inActiveVolume
-	_ana_tree->Fill();
-      }
-      else
-	_inActiveVolume = 0;
-      
+	}//if correct shower type
       
     }//for all particles
     
@@ -210,19 +214,19 @@ namespace larlite {
   }
 
 
-  double MCShowerBackground::addTrack(mctrack *track){
+  double MCShowerBackground::addTrack(const mctrack& track){
 
     double totLen = 0;
-    std::vector<std::vector<double> > thisTrack;    
+    geoalgo::Trajectory_t thisTrack(0,3);    
     
-    for (size_t i=0; i < track->size(); i++){
-      thisTrack.push_back( {track->at(i).X(), track->at(i).Y(), track->at(i).Z()} );
+    for (size_t i=0; i < track.size(); i++){
+      thisTrack.push_back( {track.at(i).X(), track.at(i).Y(), track.at(i).Z()} );
       if (i > 0)
-	totLen += pow ( (track->at(i-1).X()-track->at(i).X())*(track->at(i-1).X()-track->at(i).X()) +
-			(track->at(i-1).Y()-track->at(i).Y())*(track->at(i-1).Y()-track->at(i).Y()) +
-			(track->at(i-1).Z()-track->at(i).Z())*(track->at(i-1).Z()-track->at(i).Z()), 0.5);
+	totLen += pow ( (track.at(i-1).X()-track.at(i).X())*(track.at(i-1).X()-track.at(i).X()) +
+			(track.at(i-1).Y()-track.at(i).Y())*(track.at(i-1).Y()-track.at(i).Y()) +
+			(track.at(i-1).Z()-track.at(i).Z())*(track.at(i-1).Z()-track.at(i).Z()), 0.5);
     }// for all track steps
-    _allTrackIDs.push_back(track->TrackID());
+    _allTrackIDs.push_back(track.TrackID());
     _allTracks.push_back(thisTrack);
     return totLen;
   }

@@ -58,7 +58,7 @@ namespace larlite {
 
     void resetTree();
 
-    double addTrack(mctrack *track);
+    double addTrack(const mctrack& track);
 
     protected:
 
@@ -75,7 +75,7 @@ namespace larlite {
     ShowerCutCalculator _cutParamCalculator;
 
     /// All muons tracks
-    std::vector<std::vector<std::vector<double> > > _allTracks;
+    std::vector<geoalgo::Trajectory_t> _allTracks;
     std::vector<int> _allTrackIDs;
 
 
@@ -84,78 +84,79 @@ namespace larlite {
 
     //Cut Distance
     double _cutDist;
-
-
-	TTree * _ana_tree ;
-		
-	int _run ;
-	int _subrun ;
-	int _event ;
-
-	std::string _process ;
-	int _PDG ;
-	int _trackID ;
-
-	double _X ;
-	double _Y ;
-	double _Z ;
-	double _T ;
-
-	double _Px ;
-	double _Py ;
-	double _Pz ;
-	double _E ;
-
-	int _inActiveVolume ;
-
-	double _distAlongTraj ;
-	double _distBackAlongTraj ;
-
-	double _minMuDist;
-	double _minMuIP;
-	double _distToIP;
-
-	double _minMuDistExceptAncestor;
-	double _minMuIPExceptAncestor;
-	double _distToIPExceptAncestor;
-
-	double _ancDist;
-	double _ancIP;
-	double _ancToIP;
-
-	//Save info about parent as well
-	int _parentPDG ;
-	double _parentX ;
-	double _parentY ;
-	double _parentZ ;
-	double _parentT ;
-
+    
+    
+    TTree * _ana_tree ;
+    
+    int _run ;
+    int _subrun ;
+    int _event ;
+    
+    std::string _process ;
+    int _PDG ;
+    int _trackID ;
+    
+    double _X ;
+    double _Y ;
+    double _Z ;
+    double _T ;
+    
+    double _Px ;
+    double _Py ;
+    double _Pz ;
+    double _E ;
+    
+    int _inActiveVolume ;
+    
+    double _distAlongTraj ;
+    double _distBackAlongTraj;
+    double _distBackToY;
+    
+    double _minMuDist;
+    double _minMuIP;
+    double _distToIP;
+    
+    double _minMuDistExceptAncestor;
+    double _minMuIPExceptAncestor;
+    double _distToIPExceptAncestor;
+    
+    double _ancDist;
+    double _ancIP;
+    double _ancToIP;
+    
+    //Save info about parent as well
+    int _parentPDG ;
+    double _parentX ;
+    double _parentY ;
+    double _parentZ ;
+    double _parentT ;
+    
     double _parentPx;
-	double _parentPy;
-	double _parentPz ; 
-	double _parentE ; 
+    double _parentPy;
+    double _parentPz ; 
+    double _parentE ; 
 
-	int _parentInActiveVolume ;
-
-
-	//Save info about ancestor as well
-	int _ancestorPDG ;
-	double _ancestorX ;
-	double _ancestorY ;
-	double _ancestorZ ;
-	double _ancestorT ;
-
-	double _ancestorPx;
-	double _ancestorPy;
-	double _ancestorPz ; 
-	double _ancestorE ; 
-
-	int _ancestorInActiveVolume ;
-
-	std::vector<std::vector<double> > ShowerTraj;
-	std::vector<std::vector<double> > MotherTraj;
-	std::vector<std::vector<double> > AncestorTraj;
-
+    int _parentInActiveVolume ;
+    
+    
+    //Save info about ancestor as well
+    int _ancestorPDG ;
+    double _ancestorX ;
+    double _ancestorY ;
+    double _ancestorZ ;
+    double _ancestorT ;
+    
+    double _ancestorPx;
+    double _ancestorPy;
+    double _ancestorPz ; 
+    double _ancestorE ; 
+    
+    int _ancestorInActiveVolume ;
+    
+    std::vector<std::vector<double> > ShowerTraj;
+    std::vector<std::vector<double> > MotherTraj;
+    std::vector<std::vector<double> > AncestorTraj;
+    
     //histogram for muon track length
     TH1D *_hTrackTotLen;
     //histogram for number of tracks

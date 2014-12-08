@@ -17,10 +17,6 @@
 
 #include "Analysis/ana_base.h"
 #include "MCgetter.h"
-#include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
-#include "BasicTool/GeoAlgo/PointToLineDist.h"
-#include "BasicTool/GeoAlgo/TwoLineIntersection.h"
-#include "BasicTool/GeoAlgo/SegmentPoCA.h"
 #include "LArUtil/Geometry.h"
 #include <string>
 
@@ -88,16 +84,6 @@ namespace larlite {
 
     /// MCgetter to make mc particle map
     MCgetter _MCgetter;
-
-    /// GeoAlg for TPC containment
-    geoalgo::TrajectoryInVolume _inTPCAlgo;
-    /// GeoAlg for point to line dist
-    geoalgo::PointToLineDist _pointDist;
-    /// GeoAlg for poka cut
-    geoalgo::TwoLineIntersection _lineIntersection;
-    /// GeoAlg for PoCA cut
-    geoalgo::SegmentPoCA _PoCA;
-
 
     // muon tree
     TTree *_muontree;

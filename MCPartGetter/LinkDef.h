@@ -13,7 +13,6 @@
 #pragma link C++ class larlite::MCgetter+;
 #pragma link C++ class TreeNode+;
 #pragma link C++ class TreeTop+;
-#pragma link C++ class larlite::ComptonBackground+;
 #pragma link C++ class larlite::MCShowerBackground+;
 #pragma link C++ class larlite::CountEvents+;
 #pragma link C++ class larlite::CosmicTracks+;

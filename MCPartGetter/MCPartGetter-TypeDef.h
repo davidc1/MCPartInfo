@@ -10,7 +10,6 @@
 #include "MCPartExample.h"
 #include "TreeNode.h"
 #include "TreeTop.h"
-#include "ComptonBackground.h"
 #include "MCShowerBackground.h"
 #include "CountEvents.h"
 #include "CosmicTracks.h"
@@ -27,7 +26,6 @@ namespace larlite {
 
   class MCgetter;
   class MCPartExample;
-  class ComptonBackground;
   class MCShowerBackground;
   class CountEvents;
   class CosmicTracks;

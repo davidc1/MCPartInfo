@@ -5,76 +5,62 @@
 
 
 void ShowerCutCalculator::SetAlgoProperties(){
-  
-  /// set volume for TrajectoryInVolume algorithm
-  _inTPCAlgo.SetVolume( 0, 
-			2*(::larutil::Geometry::GetME()->DetHalfWidth()),
-			-(::larutil::Geometry::GetME()->DetHalfHeight()),
-			::larutil::Geometry::GetME()->DetHalfHeight(),
-			0,
-			::larutil::Geometry::GetME()->DetLength());
 
-  _DistToBoxWall.SetXYZMin( 0,
-			    -(::larutil::Geometry::GetME()->DetHalfHeight()),
-			    0);
-
-  _DistToBoxWall.SetXYZMax( 2*(::larutil::Geometry::GetME()->DetHalfWidth()),
-			    ::larutil::Geometry::GetME()->DetHalfHeight(),
-			    ::larutil::Geometry::GetME()->DetLength());
-
-  _inVol.SetVolume(0,256.35,-116.5,116.5,0,1036.8) ;
-  
-}
-
-bool ShowerCutCalculator::isInVolume(std::vector<double> point){
-  
-  return _inVol.PointInVolume(point);
+  /// Set TPC
+  _TpcBox = geoalgo::AABox(0, -(::larutil::Geometry::GetME()->DetHalfHeight()), 0,
+			   2*(::larutil::Geometry::GetME()->DetHalfWidth()),
+			   ::larutil::Geometry::GetME()->DetHalfHeight(),
+			   ::larutil::Geometry::GetME()->DetLength());
   
 }
 
 
-void ShowerCutCalculator::getNearestMuonParams(std::vector<double> *shrStart,
-					       std::vector<double> *shrDir,
-					       std::vector<std::vector<std::vector<double> > > *muonTracks,
-					       std::vector<int> *muonIDs,
-					       int ancestorID,
+bool ShowerCutCalculator::isInVolume(const std::vector<double>& point){
+
+  geoalgo::Point_t p(point);
+
+  return _TpcBox.Contain(p);
+  
+}
+
+
+void ShowerCutCalculator::getNearestMuonParams(const geoalgo::Point_t& shrStart,
+					       const geoalgo::Vector_t& shrDir,
+					       const std::vector<geoalgo::Trajectory_t >& muonTracks,
+					       const std::vector<int>& muonIDs,
+					       const int ancestorID,
 					       double &Dist,
 					       double &IP,
-					       double &DistToIP){
+					       double &DistToIP) const
+{
   
   // use shower's start point + direction and list of muon trajectory to find:
   // 1) PoCA and PoCA distance to shower start point w/ PoCA GeoAlgo class
   // 2) MuonDist for cylinder cut
   
   // initialize values for PoCA cut
-  double minIP = 10000;
-  std::vector<double> IP_onShr = {-1000, -1000, -1000};
-  std::vector<double> c1 = {-1000,-1000,-1000};
-  std::vector<double> c2 = {-1000,-1000,-1000};
-  std::vector<double> PoCAPointMU = {-1000,-1000,-1000};
-  std::vector<double> PoCAPointE = {-1000,-1000,-1000};
+  double minIP = std::numeric_limits<double>::max();
+  geoalgo::Point_t IP_onShr(3);
+  geoalgo::Vector c1(3);
+  geoalgo::Vector c2(3);
+  //  std::vector<double> c1 = {-1000,-1000,-1000};
+  //  std::vector<double> c2 = {-1000,-1000,-1000};
   // initialize values for muon proximity
-  double minDist = 10000;
+  double minDist = std::numeric_limits<double>::max();
 
   // use shower start & momentum to define a segment
   // which starts 3 meters before start point
   // and ends 10 cm after start point
   // aligned with shr momentum. Use for Impact Parameter
-  std::vector<double> shrOrigin = { shrStart->at(0)-300*shrDir->at(0),
-				    shrStart->at(1)-300*shrDir->at(1),
-				    shrStart->at(2)-300*shrDir->at(2) };
-
-  std::vector<double> shrEnd = { shrStart->at(0)+10*shrDir->at(0),
-				 shrStart->at(1)+10*shrDir->at(1),
-				 shrStart->at(2)+10*shrDir->at(2) };
+  geoalgo::LineSegment shrSeg(shrStart-shrDir*300,shrStart+shrDir*10);
 
   // loop over all muon tracks and calculate value per-muon
-  for (size_t u=0; u < muonTracks->size(); u++){
+  for (size_t u=0; u < muonTracks.size(); u++){
 
-    if ( (muonTracks->at(u).size() > 1) and (muonIDs->at(u) != ancestorID) ){
-      double tmpDist = _pointDist.DistanceToTrack(*shrStart, muonTracks->at(u));
-      double tmpIP = _PoCA.ClosestApproachToTrajectory(muonTracks->at(u), shrOrigin, shrEnd, c1, c2);
-      
+    if ( (muonTracks.at(u).size() > 1) and (muonIDs.at(u) != ancestorID) ){
+
+      double tmpDist = _dAlgo.SqDist(shrStart, muonTracks.at(u));
+      double tmpIP = _dAlgo.SqDist(muonTracks.at(u), shrSeg, c1, c2);
       if (tmpDist < minDist) { minDist = tmpDist; }
       if (tmpIP < minIP) { 
 	minIP = tmpIP; 
@@ -85,23 +71,15 @@ void ShowerCutCalculator::getNearestMuonParams(std::vector<double> *shrStart,
     
   }// for all muon tracks
 
-  if (minDist != 10000){
-    DistToIP = pow( (IP_onShr.at(0)-shrStart->at(0))*(IP_onShr.at(0)-shrStart->at(0)) +
-		    (IP_onShr.at(1)-shrStart->at(1))*(IP_onShr.at(1)-shrStart->at(1)) +
-		    (IP_onShr.at(2)-shrStart->at(2))*(IP_onShr.at(2)-shrStart->at(2)), 0.5 );
-    
-    
+  if (minDist != std::numeric_limits<double>::max()){
+    DistToIP = IP_onShr.Dist(shrStart);
     Dist = sqrt(minDist);
     IP = sqrt(minIP);
     
     //need to figure out if IP point is "before" or "after" start point w.r.t. momentum direction
     if (DistToIP > 0.001){
-      std::vector<double> vec = { IP_onShr.at(0)-shrStart->at(0),
-				  IP_onShr.at(1)-shrStart->at(1),
-				  IP_onShr.at(2)-shrStart->at(2) };
-      double vecmag = sqrt( (vec.at(0)*vec.at(0)) + (vec.at(1)*vec.at(1)) + (vec.at(2)*vec.at(2)) );
-      double vec_dir = (vec.at(0)*shrDir->at(0) + vec.at(1)*shrDir->at(1) + vec.at(2)*shrDir->at(2))/vecmag;
-      if (vec_dir == 1 ) { DistToIP *= -1; }
+      double dot = ( (IP_onShr-shrStart)/((IP_onShr-shrStart).Length()) )*shrDir;
+      if (dot == 1 ) { DistToIP *= -1; }
     }
   }
 
@@ -109,43 +87,36 @@ void ShowerCutCalculator::getNearestMuonParams(std::vector<double> *shrStart,
 }// function    
 
 
-void ShowerCutCalculator::getAncestorMuonParams(std::vector<double> *shrStart,
-						std::vector<double> *shrDir,
-						std::vector<std::vector<double> >  *muonTrack,
+void ShowerCutCalculator::getAncestorMuonParams(const geoalgo::Point_t& shrStart,
+						const geoalgo::Vector_t& shrDir,
+						const geoalgo::Trajectory_t& muonTrack,
 						double &Dist,
 						double &IP,
-						double &DistToIP){
+						double &DistToIP) const
+{
   
   // use shower's start point + direction and list of muon trajectory to find:
   // 1) PoCA and PoCA distance to shower start point w/ PoCA GeoAlgo class
   // 2) MuonDist for cylinder cut
   
   // initialize values for PoCA cut
-  double minIP = 10000;
-  std::vector<double> IP_onShr = {-1000, -1000, -1000};
-  std::vector<double> c1 = {-1000,-1000,-1000};
-  std::vector<double> c2 = {-1000,-1000,-1000};
-  std::vector<double> PoCAPointMU = {-1000,-1000,-1000};
-  std::vector<double> PoCAPointE = {-1000,-1000,-1000};
+  double minIP = std::numeric_limits<double>::max();
+  geoalgo::Point_t IP_onShr(3);
+  geoalgo::Point_t c1(3);
+  geoalgo::Point_t c2(3);
   // initialize values for muon proximity
-  double minDist = 10000;
+  double minDist = std::numeric_limits<double>::max();
 
   // use shower start & momentum to define a segment
   // which starts 3 meters before start point
   // and ends 10 cm after start point
   // aligned with shr momentum. Use for Impact Parameter
-  std::vector<double> shrOrigin = { shrStart->at(0)-300*shrDir->at(0),
-				    shrStart->at(1)-300*shrDir->at(1),
-				    shrStart->at(2)-300*shrDir->at(2) };
+  geoalgo::LineSegment_t shrSeg(shrStart-shrDir*300,shrStart+shrDir*10);
 
-  std::vector<double> shrEnd = { shrStart->at(0)+10*shrDir->at(0),
-				 shrStart->at(1)+10*shrDir->at(1),
-				 shrStart->at(2)+10*shrDir->at(2) };
-  
-  if ( muonTrack->size() > 1 ){
+  if ( muonTrack.size() > 1 ){
 
-    double tmpDist = _pointDist.DistanceToTrack(*shrStart, *muonTrack);
-    double tmpIP = _PoCA.ClosestApproachToTrajectory(*muonTrack, shrOrigin, shrEnd, c1, c2);
+    double tmpDist = _dAlgo.SqDist(shrStart,muonTrack);//DistanceToTrack(*shrStart, *muonTrack);
+    double tmpIP = _dAlgo.SqDist(muonTrack,shrSeg,c1,c2);//_PoCA.ClosestApproachToTrajectory(*muonTrack, shrOrigin, shrEnd, c1, c2);
     
     if (tmpDist < minDist) { minDist = tmpDist; }
     if (tmpIP < minIP) { 
@@ -153,22 +124,14 @@ void ShowerCutCalculator::getAncestorMuonParams(std::vector<double> *shrStart,
       IP_onShr = c2;
     }// if best muon so far
 
-    DistToIP = pow( (IP_onShr.at(0)-shrStart->at(0))*(IP_onShr.at(0)-shrStart->at(0)) +
-		    (IP_onShr.at(1)-shrStart->at(1))*(IP_onShr.at(1)-shrStart->at(1)) +
-		    (IP_onShr.at(2)-shrStart->at(2))*(IP_onShr.at(2)-shrStart->at(2)), 0.5 );
-    
-    
+    DistToIP = IP_onShr.Dist(shrStart);
     Dist = sqrt(minDist);
     IP = sqrt(minIP);
     
     //need to figure out if IP point is "before" or "after" start point w.r.t. momentum direction
     if (DistToIP > 0.001){
-      std::vector<double> vec = { IP_onShr.at(0)-shrStart->at(0),
-				  IP_onShr.at(1)-shrStart->at(1),
-				  IP_onShr.at(2)-shrStart->at(2) };
-      double vecmag = sqrt( (vec.at(0)*vec.at(0)) + (vec.at(1)*vec.at(1)) + (vec.at(2)*vec.at(2)) );
-      double vec_dir = (vec.at(0)*shrDir->at(0) + vec.at(1)*shrDir->at(1) + vec.at(2)*shrDir->at(2))/vecmag;
-      if (vec_dir == 1 ) { DistToIP *= -1; }
+      double dot = ( (IP_onShr-shrStart)/((IP_onShr-shrStart).Length()) )*shrDir;
+      if (dot == 1 ) { DistToIP *= -1; }
     }
   }// if the muon's track is > 1
   
@@ -177,18 +140,15 @@ void ShowerCutCalculator::getAncestorMuonParams(std::vector<double> *shrStart,
 
 
 
-void ShowerCutCalculator::getDistanceToWall(std::vector<double> shrStart,
-					    std::vector<double> shrDir,
+void ShowerCutCalculator::getDistanceToWall(const geoalgo::Point_t& shrStart,
+					    const geoalgo::Vector_t& shrDir,
 					    double &distToWallForwards,
-					    double &distToWallBackwards){
-  //  std::cout << "Shower Position: [" << shrStart.at(0) << ", "
-  //	    << shrStart.at(1) << ", " << shrStart.at(2) << "]" << std::endl;
-  //  std::cout << "Shower Direction: [" << shrDir.at(0) << ", "
-  //	    << shrDir.at(1) << ", " << shrDir.at(2) << "]" << std::endl;
-  distToWallForwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
-  distToWallBackwards = _DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
-  //  std::cout << "Dist Back to Wall: " << distToWallBackwards << std::endl;
+					    double &distToWallBackwards) const
+{
+  geoalgo::HalfLine_t sDir(shrStart,shrDir);
 
+  distToWallForwards = sqrt(shrStart.SqDist(_iAlgo.Intersection(_TpcBox,sDir)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
+  distToWallBackwards = sqrt(shrStart.SqDist(_iAlgo.Intersection(_TpcBox,sDir,true)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
   return;
 }
   

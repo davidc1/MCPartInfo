@@ -49,16 +49,7 @@ namespace larlite {
 
   }
 
-  void MCPartExample::SetProperties(){
-
-    /// set volume for TrajectoryInVolume algorithm
-    _inTPCAlgo.SetVolume( 0, 
-			  2*(::larutil::Geometry::GetME()->DetHalfWidth()),
-			  -(::larutil::Geometry::GetME()->DetHalfHeight()),
-			  ::larutil::Geometry::GetME()->DetHalfHeight(),
-			  0,
-			  ::larutil::Geometry::GetME()->DetLength());
-  }
+  void MCPartExample::SetProperties(){}
 
   
   bool MCPartExample::analyze(storage_manager* storage) {

@@ -18,12 +18,9 @@
 #include "LArUtil/Geometry.h"
 #include <time.h>
 // include GeoAlgo functions
-#include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
-#include "BasicTool/GeoAlgo/PointToLineDist.h"
-#include "BasicTool/GeoAlgo/TwoLineIntersection.h"
-#include "BasicTool/GeoAlgo/SegmentPoCA.h"
-#include "BasicTool/GeoAlgo/DistToBoxWall.h"
-#include "BasicTool/GeoAlgo/TrajectoryInVolume.h"
+#include "BasicTool/GeoAlgo/GeoAlgoConstants.h"
+#include "BasicTool/GeoAlgo/DistanceAlgo.h"
+#include "BasicTool/GeoAlgo/IntersectAlgo.h"
 
 /**
    \class ShowerCutCalculator
@@ -42,46 +39,41 @@ class ShowerCutCalculator{
 
   void SetAlgoProperties();
 
-  bool isInVolume(std::vector<double> point);
+  bool isInVolume(const std::vector<double>& point);
 
-  void getNearestMuonParams(std::vector<double> *shrStart,
-			    std::vector<double> *shrDir,
-			    std::vector<std::vector<std::vector<double> > > *muonTracks,
-			    std::vector<int> *muonIDs,
-			    int ancestorID,
+  void getNearestMuonParams(const geoalgo::Point_t& shrStart,
+			    const geoalgo::Vector_t& shrDir,
+			    const std::vector<geoalgo::Trajectory_t >& muonTracks,
+			    const std::vector<int>& muonIDs,
+			    const int ancestorID,
 			    double &Dist,
 			    double &IP,
-			    double &DistToIP);
+			    double &DistToIP) const;
 
-  void getAncestorMuonParams(std::vector<double> *shrStart,
-			     std::vector<double> *shrDir,
-			     std::vector<std::vector<double> > *muonTrack,
+  void getAncestorMuonParams(const geoalgo::Point_t& shrStart,
+			     const geoalgo::Vector_t& shrDir,
+			     const geoalgo::Trajectory_t& muonTrack,
 			     double &Dist,
 			     double &IP,
-			     double &DistToIP);
+			     double &DistToIP) const;
 
 
-  void getDistanceToWall(std::vector<double> shrStart,
-			 std::vector<double> shrDir,
+  void getDistanceToWall(const geoalgo::Point_t& shrStart,
+			 const geoalgo::Vector_t& shrDir,
 			 double &distToWallForwards,
-			 double &distToWallBackwards);
+			 double &distToWallBackwards) const;
 
 
  private:
 
-  // GeoAlgo algorithm used
-  geoalgo::DistToBoxWall _DistToBoxWall;
-  /// GeoAlg for TPC containment
-  geoalgo::TrajectoryInVolume _inTPCAlgo;
-  /// GeoAlg for point to line dist
-  geoalgo::PointToLineDist _pointDist;
-  /// GeoAlg for poka cut
-  geoalgo::TwoLineIntersection _lineIntersection;
-  /// GeoAlg for PoCA cut
-  geoalgo::SegmentPoCA _PoCA;
-  /// GeoAlg for InVolume
-  geoalgo::TrajectoryInVolume _inVol ;  
-  
+  // GeoAlgo Distance Algo
+  geoalgo::DistanceAlgo _dAlgo;
+  // geoalgo Intersection Algo
+  geoalgo::IntersectAlgo _iAlgo;
+
+  // TPC AABos
+  geoalgo::AABox _TpcBox;
+
 
 };
 

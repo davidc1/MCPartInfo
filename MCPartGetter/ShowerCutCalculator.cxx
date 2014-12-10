@@ -59,8 +59,8 @@ void ShowerCutCalculator::getNearestMuonParams(const geoalgo::Point_t& shrStart,
 
     if ( (muonTracks.at(u).size() > 1) and (muonIDs.at(u) != ancestorID) ){
 
-      double tmpDist = _dAlgo.SqDist(shrStart, muonTracks.at(u));
-      double tmpIP = _dAlgo.SqDist(muonTracks.at(u), shrSeg, c1, c2);
+      double tmpDist = _geoAlgo.SqDist(shrStart, muonTracks.at(u));
+      double tmpIP = _geoAlgo.SqDist(muonTracks.at(u), shrSeg, c1, c2);
       if (tmpDist < minDist) { minDist = tmpDist; }
       if (tmpIP < minIP) { 
 	minIP = tmpIP; 
@@ -115,8 +115,8 @@ void ShowerCutCalculator::getAncestorMuonParams(const geoalgo::Point_t& shrStart
 
   if ( muonTrack.size() > 1 ){
 
-    double tmpDist = _dAlgo.SqDist(shrStart,muonTrack);//DistanceToTrack(*shrStart, *muonTrack);
-    double tmpIP = _dAlgo.SqDist(muonTrack,shrSeg,c1,c2);//_PoCA.ClosestApproachToTrajectory(*muonTrack, shrOrigin, shrEnd, c1, c2);
+    double tmpDist = _geoAlgo.SqDist(shrStart,muonTrack);//DistanceToTrack(*shrStart, *muonTrack);
+    double tmpIP = _geoAlgo.SqDist(muonTrack,shrSeg,c1,c2);//_PoCA.ClosestApproachToTrajectory(*muonTrack, shrOrigin, shrEnd, c1, c2);
     
     if (tmpDist < minDist) { minDist = tmpDist; }
     if (tmpIP < minIP) { 
@@ -147,8 +147,8 @@ void ShowerCutCalculator::getDistanceToWall(const geoalgo::Point_t& shrStart,
 {
   geoalgo::HalfLine_t sDir(shrStart,shrDir);
 
-  distToWallForwards = sqrt(shrStart.SqDist(_iAlgo.Intersection(_TpcBox,sDir)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
-  distToWallBackwards = sqrt(shrStart.SqDist(_iAlgo.Intersection(_TpcBox,sDir,true)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
+  distToWallForwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
+  distToWallBackwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir,true)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
   return;
 }
   

@@ -19,8 +19,7 @@
 #include <time.h>
 // include GeoAlgo functions
 #include "BasicTool/GeoAlgo/GeoAlgoConstants.h"
-#include "BasicTool/GeoAlgo/DistanceAlgo.h"
-#include "BasicTool/GeoAlgo/IntersectAlgo.h"
+#include "BasicTool/GeoAlgo/GeoAlgo.h"
 
 /**
    \class ShowerCutCalculator
@@ -66,11 +65,8 @@ class ShowerCutCalculator{
 
  private:
 
-  // GeoAlgo Distance Algo
-  geoalgo::DistanceAlgo _dAlgo;
-  // geoalgo Intersection Algo
-  geoalgo::IntersectAlgo _iAlgo;
-
+  // GeoAlgo
+  geoalgo::GeoAlgo _geoAlgo;
   // TPC AABos
   geoalgo::AABox _TpcBox;
 

@@ -30,9 +30,9 @@ namespace larlite {
   bool MCShowerBackground::analyze(storage_manager* storage) {
 
     // get MCShowers
-    auto evt_mcshower = storage->get_data<event_mcshower>("davidc1");
+    auto evt_mcshower = storage->get_data<event_mcshower>("mcreco");
     // get MCTracks
-    auto evt_mctracks = storage->get_data<event_mctrack>("davidc1");
+    auto evt_mctracks = storage->get_data<event_mctrack>("mcreco");
 
     //keep track of total lenght of all muon tracks in event
     double totMuonLen = 0;
@@ -64,59 +64,60 @@ namespace larlite {
       mcshower shr = evt_mcshower->at(s);
 
       //Make sure shower is PDG == 11 and mother == ancestor
-      if ( (shr.PdgCode() == 11) and (shr.MotherTrackID() == shr.AncestorTrackID()) ) {
+      //if ( (shr.PdgCode() == 11) and (shr.MotherTrackID() == shr.AncestorTrackID()) ) {
+      if ( 1== 1) {
+	_run = evt_mctracks->run() ;
+	_subrun = evt_mctracks->subrun();
+	_event = evt_mctracks->event_id(); 
 	  
-	  _run = evt_mctracks->run() ;
-	  _subrun = evt_mctracks->subrun();
-	  _event = evt_mctracks->event_id(); 
 	  
-	  
-	  _trackID = shr.TrackID();
+	_trackID = shr.TrackID();
+	_inActiveVolume = 1;
+	
+	//	  if ((shr.PdgCode() == 11) or (shr.PdgCode() == -11) ){
+	_Px = shr.Start().X();
+	_Py = shr.Start().Y();
+	_Pz = shr.Start().Z();
+	//}
+	//else{
+	_X = shr.DetProfile().X();
+	_Y = shr.DetProfile().Y();
+	_Z = shr.DetProfile().Z();
+	//}
+	
+	geoalgo::Point_t shrStart(_X, _Y, _Z);
+	
+	if(_cutParamCalculator.isInVolume(shrStart)){
 	  _inActiveVolume = 1;
 	  
-	  if ((shr.PdgCode() == 11) or (shr.PdgCode() == -11) ){
-	    _X = shr.Start().X();
-	    _Y = shr.Start().Y();
-	    _Z = shr.Start().Z();
-	  }
-	  else{
-	    _X = shr.DetProfile().X();
-	    _Y = shr.DetProfile().Y();
-	    _Z = shr.DetProfile().Z();
-	  }
-	  
-	  geoalgo::Point_t shrStart(_X, _Y, _Z);
-	  
-	  if(_cutParamCalculator.isInVolume(shrStart)){
-	    _inActiveVolume = 1;
-	    
-	    _Px = shr.Start().Px();
-	    _Py = shr.Start().Py();
-	    _Pz = shr.Start().Pz();
+	  //_Px = shr.Start().Px();
+	    //_Py = shr.Start().Py();
+	    //_Pz = shr.Start().Pz();
 
-	    double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
-	    geoalgo::Vector_t shrDir(_Px/shrMom,_Py/shrMom,_Pz/shrMom);
-	    //std::vector<double> shrDir = {_Px,_Py,_Pz};
-	    
-	    _T          = shr.DetProfile().T();
-	    _E          = shr.Start().E();
-	    _process    = shr.Process();
-	    _PDG        = shr.PdgCode();
-	    
-	    // get mother information
-	    // if shower starts with photon -> mother is the photon
-	    if (_PDG == 22){
-	      _parentPDG = shr.PdgCode();
-	      _parentX   = shr.Start().X();
-	      _parentY   = shr.Start().Y();
-	      _parentZ   = shr.Start().Z();
-	      _parentT   = shr.Start().T();
-	      _parentPx  = shr.Start().Px();
-	      _parentPy  = shr.Start().Py();
-	      _parentPz  = shr.Start().Pz();
-	      _parentE   = shr.Start().E();
-	    }	  
-	    // otherwise -> electron/positron's mother is the "mother"
+	  double shrMom = sqrt(_Px*_Px+_Py*_Py+_Pz*_Pz);
+	  geoalgo::Vector_t shrDir(_Px/shrMom,_Py/shrMom,_Pz/shrMom);
+	  //std::vector<double> shrDir = {_Px,_Py,_Pz};
+	  
+	  _T          = shr.DetProfile().T();
+	  //	  _E          = shr.Start().E();	  
+	  _E          = shr.DetProfile().E();
+	  _process    = shr.Process();
+	  _PDG        = shr.PdgCode();
+	  
+	  // get mother information
+	  // if shower starts with photon -> mother is the photon
+	  if (_PDG == 22){
+	    _parentPDG = shr.PdgCode();
+	    _parentX   = shr.Start().X();
+	    _parentY   = shr.Start().Y();
+	    _parentZ   = shr.Start().Z();
+	    _parentT   = shr.Start().T();
+	    _parentPx  = shr.Start().Px();
+	    _parentPy  = shr.Start().Py();
+	    _parentPz  = shr.Start().Pz();
+	    _parentE   = shr.Start().E();
+	  }	  
+	  // otherwise -> electron/positron's mother is the "mother"
 	    else{
 	      _parentPDG = shr.MotherPdgCode();
 	      _parentX = shr.MotherStart().X();

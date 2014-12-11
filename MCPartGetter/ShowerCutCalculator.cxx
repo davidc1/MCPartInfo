@@ -147,8 +147,8 @@ void ShowerCutCalculator::getDistanceToWall(const geoalgo::Point_t& shrStart,
 {
   geoalgo::HalfLine_t sDir(shrStart,shrDir);
 
-  distToWallForwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
-  distToWallBackwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir,true)));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
+  distToWallForwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir)[0]));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,1);
+  distToWallBackwards = sqrt(shrStart.SqDist(_geoAlgo.Intersection(_TpcBox,sDir,true)[0]));//_DistToBoxWall.DistanceToWall(shrStart,shrDir,0);
   return;
 }
   
